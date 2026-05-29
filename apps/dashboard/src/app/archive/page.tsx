@@ -1,4 +1,6 @@
 import { listAllLabs } from "@/lib/queries";
+import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -7,53 +9,69 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   const q = (sp.q ?? "").toLowerCase().trim();
   const labFilter = (sp.lab ?? "").trim();
 
-  let labs = listAllLabs();
+  const all = listAllLabs();
+  let labs = all;
   if (q) labs = labs.filter((l) => (l.lab_name + " " + (l.panel ?? "")).toLowerCase().includes(q));
   if (labFilter) labs = labs.filter((l) => l.lab_name === labFilter);
 
-  const knownLabs = Array.from(new Set(listAllLabs().map((l) => l.lab_name))).sort();
+  const knownLabs = Array.from(new Set(all.map((l) => l.lab_name))).sort();
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Архив</h1>
+    <>
+      <PageHeader title="Архив" meta={`${labs.length} из ${all.length} сдач`} />
 
-      <form className="flex gap-3 items-end">
+      <form className="flex gap-3 items-end mb-6">
         <div>
-          <label className="block text-sm">Поиск</label>
-          <input name="q" defaultValue={sp.q ?? ""} className="border rounded px-2 py-1" />
+          <label className="block text-[11px] uppercase tracking-wider text-text-faint mb-1">Поиск</label>
+          <input
+            name="q"
+            defaultValue={sp.q ?? ""}
+            className="bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
+            placeholder="по лаборатории или панели"
+          />
         </div>
         <div>
-          <label className="block text-sm">Лаборатория</label>
-          <select name="lab" defaultValue={sp.lab ?? ""} className="border rounded px-2 py-1">
+          <label className="block text-[11px] uppercase tracking-wider text-text-faint mb-1">Лаборатория</label>
+          <select
+            name="lab"
+            defaultValue={sp.lab ?? ""}
+            className="bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-border-active"
+          >
             <option value="">все</option>
             {knownLabs.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
-        <button className="bg-blue-600 text-white rounded px-3 py-1.5">Применить</button>
+        <button className="bg-flag-low text-bg-page rounded-md px-4 py-2 text-sm font-medium">Применить</button>
       </form>
 
-      <table className="w-full text-sm border-collapse">
-        <thead className="bg-neutral-100">
-          <tr>
-            <th className="p-2 text-left">Дата</th>
-            <th className="p-2 text-left">Лаборатория</th>
-            <th className="p-2 text-left">Панель</th>
-            <th className="p-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {labs.map((l) => (
-            <tr key={l.id} className="border-t">
-              <td className="p-2">{l.date}</td>
-              <td className="p-2">{l.lab_name}</td>
-              <td className="p-2">{l.panel ?? "—"}</td>
-              <td className="p-2"><a className="text-blue-700" href={`/lab/${l.id}`}>открыть</a></td>
+      <div className="bg-bg-surface border border-border-soft rounded-2xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-bg-elevated text-text-faint">
+            <tr>
+              <th className="p-3 text-left font-medium">Дата</th>
+              <th className="p-3 text-left font-medium">Лаборатория</th>
+              <th className="p-3 text-left font-medium">Панель</th>
+              <th className="p-3"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {labs.map((l) => (
+              <tr key={l.id} className="border-t border-border-soft hover:bg-bg-elevated/40 transition-colors">
+                <td className="p-3 text-text-primary tabular">{l.date}</td>
+                <td className="p-3 text-text-muted">{l.lab_name}</td>
+                <td className="p-3 text-text-muted">{l.panel ?? "—"}</td>
+                <td className="p-3">
+                  <Link href={`/lab/${l.id}`} className="text-flag-low hover:underline text-xs">открыть →</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {labs.length === 0 && <div className="text-sm text-neutral-500">Ничего не найдено</div>}
-    </div>
+      {labs.length === 0 && (
+        <div className="mt-6 text-sm text-text-faint">Ничего не найдено</div>
+      )}
+    </>
   );
 }

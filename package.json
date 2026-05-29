@@ -6,7 +6,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "migrate": "tsx scripts/migrate.ts",
-    "dev": "concurrently -n watcher,dashboard -c yellow,cyan \"pnpm --filter @health/importer watch\" \"pnpm --filter @health/dashboard dev\""
+    "dev": "concurrently -n watcher,dashboard,bot -c yellow,cyan,magenta \"pnpm --filter @health/importer watch\" \"pnpm --filter @health/dashboard dev\" \"pnpm --filter @health/telegram-bot dev\""
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

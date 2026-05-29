@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { CLAUDE_BIN, ParseResult, ParseResultSchema } from "@health/shared";
+import { CLAUDE_BIN, ParseResult, ParseResultSchema, VAULT } from "@health/shared";
 import { buildParseLabPrompt } from "../prompts/parse-lab.js";
 
 export interface ParseOptions {
@@ -9,8 +9,14 @@ export interface ParseOptions {
 
 function defaultRunner(prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const proc = spawn(CLAUDE_BIN, ["-p", "--output-format", "text", prompt], {
-      stdio: ["ignore", "pipe", "pipe"],
+    const proc = spawn(CLAUDE_BIN, [
+      "-p",
+      "--output-format", "text",
+      "--permission-mode", "bypassPermissions",
+      "--add-dir", VAULT.root,
+      "--allowedTools", "Read",
+    ], {
+      stdio: ["pipe", "pipe", "pipe"],
     });
     let out = "";
     let err = "";
@@ -21,6 +27,8 @@ function defaultRunner(prompt: string): Promise<string> {
       else resolve(out);
     });
     proc.on("error", reject);
+    proc.stdin!.write(prompt);
+    proc.stdin!.end();
   });
 }
 

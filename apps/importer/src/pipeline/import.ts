@@ -4,7 +4,7 @@ import type Database from "better-sqlite3";
 import { VAULT } from "@health/shared";
 import { fileHash } from "./hash.js";
 import { parseLabViaClaude } from "./claude.js";
-import { resolveCanonicalCode } from "./normalize.js";
+import { resolveCanonicalCode, slugify } from "./normalize.js";
 import { computeFlag } from "./flag.js";
 import { persistLab } from "./persist.js";
 import { renderLabMarkdown } from "./markdown.js";
@@ -19,10 +19,6 @@ export interface ImportResult {
 
 export interface ImportOptions {
   claudeRunner?: (prompt: string) => Promise<string>;
-}
-
-function slug(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function moveToQuarantine(filePath: string, reason: string): void {
@@ -77,7 +73,7 @@ export async function importFile(
 
   // 5. Move to originals/ with final name
   const ext = path.extname(filePath);
-  const finalName = `${parsed.date}-${slug(parsed.lab_name)}${parsed.panel ? "-" + slug(parsed.panel) : ""}${ext}`;
+  const finalName = `${parsed.date}-${slugify(parsed.lab_name)}${parsed.panel ? "-" + slugify(parsed.panel) : ""}${ext}`;
   const finalPath = path.join(VAULT.originals, finalName);
   fs.renameSync(filePath, finalPath);
   const relSource = path.join("originals", finalName);

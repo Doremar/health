@@ -5,12 +5,14 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "migrate": "tsx scripts/migrate.ts"
+    "migrate": "tsx scripts/migrate.ts",
+    "dev": "concurrently -n watcher,dashboard -c yellow,cyan \"pnpm --filter @health/importer watch\" \"pnpm --filter @health/dashboard dev\""
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
     "better-sqlite3": "^12.10.0",
+    "concurrently": "^10.0.0",
     "dotenv": "^17.4.2",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",

@@ -1,0 +1,131 @@
+<h2>Типографика — какие цифры?</h2>
+<p class="subtitle">Цифры — главный элемент. Их шрифт задаёт всё ощущение: «спокойный wellness» vs «приборная панель Bloomberg».</p>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@400;500;600&display=swap');
+
+  .typo-mockup {
+    background: #0a0e1a;
+    padding: 32px;
+    border-radius: 16px;
+    color: #d7dce8;
+  }
+  .typo-section { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6e7a99; margin-bottom: 18px; }
+
+  .hero-a {
+    background: radial-gradient(ellipse at top right, #1d2742 0%, #0e1424 70%);
+    border: 1px solid #2a3554;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    font-family: 'Inter', sans-serif;
+  }
+  .hero-a .lbl { font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #93a0bf; font-weight: 500; }
+  .hero-a .num { font-family: 'Inter', sans-serif; font-size: 68px; font-weight: 600; line-height: 1; margin-top: 10px; letter-spacing: -0.03em; color: #f4f6fb; }
+  .hero-a .unit { font-size: 16px; color: #93a0bf; margin-left: 6px; font-weight: 400; }
+  .hero-a .ref { font-family: 'Inter', sans-serif; font-size: 12px; color: #93a0bf; margin-top: 10px; }
+  .hero-a .arrow { color: #fdba74; margin-left: 10px; }
+
+  .hero-b {
+    background: radial-gradient(ellipse at top right, #1d2742 0%, #0e1424 70%);
+    border: 1px solid #2a3554;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    font-family: 'Inter', sans-serif;
+  }
+  .hero-b .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #93a0bf; font-weight: 500; }
+  .hero-b .num { font-family: 'JetBrains Mono', monospace; font-size: 72px; font-weight: 500; line-height: 1; margin-top: 10px; letter-spacing: -0.02em; color: #f4f6fb; font-variant-numeric: tabular-nums; }
+  .hero-b .unit { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #93a0bf; margin-left: 8px; font-weight: 400; }
+  .hero-b .ref { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #93a0bf; margin-top: 12px; letter-spacing: 0.02em; }
+  .hero-b .arrow { color: #fdba74; margin-left: 10px; }
+
+  .mini-card {
+    background: linear-gradient(180deg, #131a2d 0%, #0e1424 100%);
+    border: 1px solid #1f2940;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .mini-card .ml { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #7d8aa5; }
+  .mini-card .mv { margin-top: 6px; }
+
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+</style>
+
+<div class="cards">
+
+  <!-- OPTION A: All Inter, soft wellness -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #050810; padding: 24px;">
+      <div class="typo-mockup">
+        <div class="typo-section">⚠ Требует внимания</div>
+        <div class="hero-a">
+          <div class="lbl">Холестерин общий</div>
+          <div class="num">2.91<span class="unit">ммоль/л</span><span class="arrow">↓</span></div>
+          <div class="ref">норма 3.6–5.2 · ниже на 19%</div>
+        </div>
+        <div class="typo-section">В фокусе</div>
+        <div class="grid-4">
+          <div class="mini-card" style="font-family: Inter;">
+            <div class="ml">Гемоглобин</div>
+            <div class="mv" style="font-size: 24px; font-weight: 600; color: #f4f6fb;">148<span style="font-size: 11px; color: #7d8aa5; font-weight: 400;">г/л</span></div>
+          </div>
+          <div class="mini-card" style="font-family: Inter;">
+            <div class="ml">СОЭ</div>
+            <div class="mv" style="font-size: 24px; font-weight: 600; color: #f4f6fb;">8<span style="font-size: 11px; color: #7d8aa5; font-weight: 400;">мм/ч</span></div>
+          </div>
+          <div class="mini-card" style="font-family: Inter;">
+            <div class="ml">Эритроц.</div>
+            <div class="mv" style="font-size: 24px; font-weight: 600; color: #f4f6fb;">5.1</div>
+          </div>
+          <div class="mini-card" style="font-family: Inter;">
+            <div class="ml">Лейкоц.</div>
+            <div class="mv" style="font-size: 24px; font-weight: 600; color: #f4f6fb;">6.4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Inter везде</h3>
+      <p>Мягкая, спокойная, «человеческая». Цифры как в Whoop/Oura. Дружелюбный вайб, не давит.</p>
+    </div>
+  </div>
+
+  <!-- OPTION B: Inter + JetBrains Mono on numbers, data instrument -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #050810; padding: 24px;">
+      <div class="typo-mockup">
+        <div class="typo-section" style="font-family: 'JetBrains Mono';">[ ⚠ ] требует внимания</div>
+        <div class="hero-b">
+          <div class="lbl">холестерин общий</div>
+          <div class="num">2.91<span class="unit">ммоль/л</span><span class="arrow">↓</span></div>
+          <div class="ref">норма 3.6—5.2 · ниже на 19%</div>
+        </div>
+        <div class="typo-section" style="font-family: 'JetBrains Mono';">в фокусе</div>
+        <div class="grid-4">
+          <div class="mini-card" style="font-family: 'JetBrains Mono';">
+            <div class="ml">гемоглобин</div>
+            <div class="mv" style="font-size: 26px; font-weight: 500; color: #f4f6fb; font-variant-numeric: tabular-nums;">148<span style="font-size: 10px; color: #7d8aa5;">г/л</span></div>
+          </div>
+          <div class="mini-card" style="font-family: 'JetBrains Mono';">
+            <div class="ml">соэ</div>
+            <div class="mv" style="font-size: 26px; font-weight: 500; color: #f4f6fb; font-variant-numeric: tabular-nums;">8<span style="font-size: 10px; color: #7d8aa5;">мм/ч</span></div>
+          </div>
+          <div class="mini-card" style="font-family: 'JetBrains Mono';">
+            <div class="ml">эритр.</div>
+            <div class="mv" style="font-size: 26px; font-weight: 500; color: #f4f6fb; font-variant-numeric: tabular-nums;">5.1</div>
+          </div>
+          <div class="mini-card" style="font-family: 'JetBrains Mono';">
+            <div class="ml">лейкоц.</div>
+            <div class="mv" style="font-size: 26px; font-weight: 500; color: #f4f6fb; font-variant-numeric: tabular-nums;">6.4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Inter + JetBrains Mono на цифрах</h3>
+      <p>Серьёзный приборный язык. Цифры строго выровнены (tabular-nums), моноширинная типография на лейблах. Как лабораторное оборудование.</p>
+    </div>
+  </div>
+
+</div>

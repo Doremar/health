@@ -126,3 +126,117 @@ export function togglePinned(code: string): void {
     db().prepare("INSERT INTO marker_settings (code, pinned) VALUES (?, 1)").run(code);
   }
 }
+
+// ============= Feelings =============
+
+export interface FeelingRow {
+  id: number;
+  ts: string;
+  chat_id: number | null;
+  mood: number | null;
+  energy: number | null;
+  sleep_hours: number | null;
+  notes: string | null;
+  source: string;
+}
+
+export function listRecentFeelings(limit = 50): FeelingRow[] {
+  return db().prepare("SELECT * FROM feeling_logs ORDER BY ts DESC LIMIT ?").all(limit) as FeelingRow[];
+}
+
+export function getFeelingStats(): { count: number; avgMood: number | null; avgEnergy: number | null } {
+  const row = db().prepare(
+    "SELECT COUNT(*) AS count, AVG(mood) AS avgMood, AVG(energy) AS avgEnergy FROM feeling_logs"
+  ).get() as { count: number; avgMood: number | null; avgEnergy: number | null };
+  return row;
+}
+
+export function addManualFeeling(input: { mood: number; energy: number; notes?: string }): number {
+  const info = db().prepare(
+    "INSERT INTO feeling_logs (ts, mood, energy, notes, source) VALUES (?, ?, ?, ?, 'manual')"
+  ).run(new Date().toISOString(), input.mood, input.energy, input.notes ?? null);
+  return Number(info.lastInsertRowid);
+}
+
+// ============= Medications =============
+
+export interface MedRow {
+  id: number;
+  name: string;
+  dose: string | null;
+  schedule_cron: string | null;
+  schedule_hint: string | null;
+  started_at: string;
+  ended_at: string | null;
+  active: 0 | 1;
+  notes: string | null;
+}
+
+export function listMeds(includeInactive = false): MedRow[] {
+  const sql = includeInactive
+    ? "SELECT * FROM medications ORDER BY active DESC, id DESC"
+    : "SELECT * FROM medications WHERE active = 1 ORDER BY id";
+  return db().prepare(sql).all() as MedRow[];
+}
+
+export function getMedById(id: number): MedRow | null {
+  return db().prepare("SELECT * FROM medications WHERE id = ?").get(id) as MedRow | null;
+}
+
+export function addMedRecord(input: {
+  name: string;
+  dose?: string;
+  schedule_cron?: string;
+  schedule_hint?: string;
+  notes?: string;
+}): number {
+  const info = db().prepare(
+    "INSERT INTO medications (name, dose, schedule_cron, schedule_hint, started_at, active, notes) VALUES (?, ?, ?, ?, ?, 1, ?)"
+  ).run(
+    input.name,
+    input.dose ?? null,
+    input.schedule_cron ?? null,
+    input.schedule_hint ?? null,
+    new Date().toISOString(),
+    input.notes ?? null,
+  );
+  return Number(info.lastInsertRowid);
+}
+
+export function deactivateMedRecord(id: number): void {
+  db().prepare("UPDATE medications SET active = 0, ended_at = ? WHERE id = ?")
+    .run(new Date().toISOString(), id);
+}
+
+export interface IntakeRow {
+  id: number;
+  med_id: number;
+  scheduled_for: string | null;
+  ts: string;
+  status: "taken" | "skipped" | "snooze";
+  notes: string | null;
+  med_name: string;
+}
+
+export function listRecentIntakes(limit = 30): IntakeRow[] {
+  return db().prepare(`
+    SELECT i.*, m.name AS med_name
+    FROM med_intakes i JOIN medications m ON m.id = i.med_id
+    ORDER BY i.ts DESC LIMIT ?
+  `).all(limit) as IntakeRow[];
+}
+
+export function getIntakeStats(medId: number): { taken: number; skipped: number; snooze: number } {
+  const row = db().prepare(`
+    SELECT
+      SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) AS taken,
+      SUM(CASE WHEN status = 'skipped' THEN 1 ELSE 0 END) AS skipped,
+      SUM(CASE WHEN status = 'snooze' THEN 1 ELSE 0 END) AS snooze
+    FROM med_intakes WHERE med_id = ?
+  `).get(medId) as { taken: number | null; skipped: number | null; snooze: number | null };
+  return {
+    taken: row.taken ?? 0,
+    skipped: row.skipped ?? 0,
+    snooze: row.snooze ?? 0,
+  };
+}

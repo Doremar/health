@@ -1,0 +1,261 @@
+<h2>Финальная главная страница</h2>
+<p class="subtitle">Темный Whoop/Oura вайб · Hero + grid · Inter · sidebar-навигация · твои реальные данные</p>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  .full-mock {
+    background: #050810;
+    border-radius: 16px;
+    color: #e3e7f1;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 700px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: #0a0e1a;
+    border-right: 1px solid #1a2138;
+    padding: 24px 16px;
+  }
+  .brand { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: #f4f6fb; margin-bottom: 32px; padding: 0 8px; display: flex; align-items: center; gap: 8px; }
+  .brand-dot { width: 8px; height: 8px; background: linear-gradient(135deg, #6ee7b7, #fdba74); border-radius: 50%; }
+  .nav-section { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #4f5b78; padding: 0 8px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 8px; color: #93a0bf; font-size: 13px; cursor: pointer; margin-bottom: 2px; }
+  .nav-item.active { background: #131a2d; color: #f4f6fb; }
+  .nav-item .icon { width: 16px; opacity: 0.8; }
+
+  /* Main */
+  .main { padding: 28px 36px; }
+  .page-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
+  .page-h h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #f4f6fb; }
+  .page-h .meta { font-size: 12px; color: #6e7a99; }
+
+  .section-h { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6e7a99; margin: 28px 0 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .section-h:first-of-type { margin-top: 0; }
+  .section-h .count { background: #131a2d; color: #93a0bf; padding: 2px 7px; border-radius: 999px; font-size: 10px; }
+
+  /* Hero abnormal */
+  .hero {
+    background: radial-gradient(ellipse at top right, #2a1e1a 0%, #0f1424 70%);
+    border: 1px solid #3a2820;
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    background: radial-gradient(circle at top right, rgba(253,186,116,0.08), transparent 50%);
+    pointer-events: none;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .hero-lbl { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #93a0bf; font-weight: 500; }
+  .hero-panel { font-size: 11px; color: #6e7a99; font-style: italic; margin-top: 2px; }
+  .hero-flag { background: rgba(253,186,116,0.12); color: #fdba74; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .hero-num { font-size: 72px; font-weight: 600; line-height: 1; margin: 18px 0 6px; letter-spacing: -0.03em; color: #f4f6fb; }
+  .hero-num .unit { font-size: 18px; color: #93a0bf; font-weight: 400; margin-left: 8px; }
+  .hero-num .arrow { color: #fdba74; font-size: 22px; margin-left: 14px; }
+  .hero-context { font-size: 13px; color: #c8d0e2; margin-bottom: 18px; }
+  .hero-context .delta { color: #fdba74; font-weight: 500; }
+  .hero-spark { height: 64px; margin-top: 16px; }
+
+  /* Pinned mini cards */
+  .pinned-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .mini {
+    background: linear-gradient(180deg, #131a2d 0%, #0e1424 100%);
+    border: 1px solid #1f2940;
+    border-radius: 14px;
+    padding: 16px;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .mini:hover { border-color: #2a3554; }
+  .mini-lbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7d8aa5; font-weight: 500; }
+  .mini-panel { font-size: 10px; color: #4f5b78; font-style: italic; margin-top: 2px; }
+  .mini-num { font-size: 30px; font-weight: 600; line-height: 1; margin-top: 14px; letter-spacing: -0.02em; color: #f4f6fb; }
+  .mini-num .unit { font-size: 12px; color: #7d8aa5; font-weight: 400; margin-left: 4px; }
+  .mini-ref { font-size: 11px; color: #6e7a99; margin-top: 6px; }
+  .mini-spark { margin-top: 10px; height: 28px; }
+  .mini-flag { position: absolute; top: 14px; right: 14px; width: 6px; height: 6px; border-radius: 50%; background: #6ee7b7; }
+
+  /* Other section collapsed */
+  .other-toggle {
+    display: flex; align-items: center; gap: 10px;
+    color: #93a0bf; font-size: 13px; cursor: pointer;
+    padding: 14px 16px;
+    background: #0a1020;
+    border: 1px solid #1a2138;
+    border-radius: 12px;
+  }
+  .other-toggle .triangle { color: #4f5b78; }
+  .other-toggle .count-num { color: #f4f6fb; font-weight: 500; }
+</style>
+
+<div class="full-mock">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="brand"><span class="brand-dot"></span>Health</div>
+
+    <div class="nav-section">Обзор</div>
+    <div class="nav-item active"><span class="icon">●</span>Главная</div>
+    <div class="nav-item"><span class="icon">○</span>Архив</div>
+
+    <div class="nav-section" style="margin-top: 20px;">Данные</div>
+    <div class="nav-item"><span class="icon">↑</span>Загрузить</div>
+    <div class="nav-item"><span class="icon">⚙</span>Маркеры</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="page-h">
+      <h1>Snapshot</h1>
+      <div class="meta">9 сдач · последнее обновление 25 ноября</div>
+    </div>
+
+    <div class="section-h">⚠ Требует внимания <span class="count">3</span></div>
+
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="hero-lbl">Холестерин общий</div>
+          <div class="hero-panel">холестерин · ГКБ им. М.П. Кончаловского</div>
+        </div>
+        <div class="hero-flag">low</div>
+      </div>
+      <div class="hero-num">2.91<span class="unit">ммоль/л</span><span class="arrow">↓</span></div>
+      <div class="hero-context">Норма <strong style="color:#f4f6fb">3.6–5.2</strong> · ваше значение <span class="delta">на 19% ниже нижней границы</span></div>
+      <svg class="hero-spark" viewBox="0 0 800 64" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad1" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#fdba74" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#fdba74" stop-opacity="0"/>
+          </linearGradient>
+          <pattern id="ref-band" x="0" y="0" width="100%" height="100%" patternUnits="userSpaceOnUse">
+            <rect x="0" y="14" width="800" height="22" fill="#6ee7b7" fill-opacity="0.04"/>
+          </pattern>
+        </defs>
+        <rect x="0" y="14" width="800" height="22" fill="#6ee7b7" fill-opacity="0.06"/>
+        <text x="6" y="12" fill="#4f5b78" font-size="9" font-family="Inter">5.2</text>
+        <text x="6" y="44" fill="#4f5b78" font-size="9" font-family="Inter">3.6</text>
+        <path d="M0,12 L160,16 L320,32 L480,50 L640,52 L800,52 L800,64 L0,64 Z" fill="url(#grad1)"/>
+        <path d="M0,12 L160,16 L320,32 L480,50 L640,52 L800,52" stroke="#fdba74" stroke-width="2" fill="none"/>
+        <circle cx="800" cy="52" r="4" fill="#fdba74"/>
+      </svg>
+    </div>
+
+    <div class="section-h" style="margin-top: 24px;">Также вне нормы</div>
+    <div class="pinned-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="mini">
+        <span class="mini-flag" style="background:#fdba74;"></span>
+        <div class="mini-lbl">Удельный вес</div>
+        <div class="mini-panel">клин. анализ мочи</div>
+        <div class="mini-num">1.028</div>
+        <div class="mini-ref">норма 1.01–1.025 · high</div>
+      </div>
+      <div class="mini">
+        <span class="mini-flag" style="background:#fdba74;"></span>
+        <div class="mini-lbl">Уробилиноген</div>
+        <div class="mini-panel">клин. анализ мочи</div>
+        <div class="mini-num">34<span class="unit">мкмоль/л</span></div>
+        <div class="mini-ref">норма 3.2–33 · high</div>
+      </div>
+      <div class="mini">
+        <span class="mini-flag" style="background:#fdba74;"></span>
+        <div class="mini-lbl">Белок полу-колич.</div>
+        <div class="mini-panel">клин. анализ мочи</div>
+        <div class="mini-num">0.2<span class="unit">г/л</span></div>
+        <div class="mini-ref">норма 0–0.15 · high</div>
+      </div>
+    </div>
+
+    <div class="section-h" style="margin-top: 36px;">В фокусе <span class="count">6</span></div>
+    <div class="pinned-grid">
+      <div class="mini">
+        <span class="mini-flag"></span>
+        <div class="mini-lbl">Гемоглобин</div>
+        <div class="mini-panel">ОАК</div>
+        <div class="mini-num">148<span class="unit">г/л</span></div>
+        <div class="mini-ref">норма 130–160</div>
+        <svg class="mini-spark" viewBox="0 0 100 28" preserveAspectRatio="none">
+          <path d="M0,16 L25,18 L50,14 L75,16 L100,15" stroke="#6ee7b7" stroke-width="1.5" fill="none" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="mini">
+        <span class="mini-flag"></span>
+        <div class="mini-lbl">СОЭ</div>
+        <div class="mini-panel">по Вестергрену</div>
+        <div class="mini-num">8<span class="unit">мм/ч</span></div>
+        <div class="mini-ref">норма 2–15</div>
+      </div>
+      <div class="mini">
+        <span class="mini-flag"></span>
+        <div class="mini-lbl">Эритроциты</div>
+        <div class="mini-panel">ОАК</div>
+        <div class="mini-num">5.1<span class="unit">×10¹²/л</span></div>
+        <div class="mini-ref">норма 4.0–5.5</div>
+      </div>
+      <div class="mini">
+        <span class="mini-flag"></span>
+        <div class="mini-lbl">Лейкоциты</div>
+        <div class="mini-panel">ОАК</div>
+        <div class="mini-num">6.4<span class="unit">×10⁹/л</span></div>
+        <div class="mini-ref">норма 4.0–9.0</div>
+      </div>
+      <div class="mini">
+        <span class="mini-flag"></span>
+        <div class="mini-lbl">Тромбоциты</div>
+        <div class="mini-panel">ОАК</div>
+        <div class="mini-num">245<span class="unit">×10⁹/л</span></div>
+        <div class="mini-ref">норма 180–360</div>
+      </div>
+      <div class="mini">
+        <span class="mini-flag"></span>
+        <div class="mini-lbl">Гематокрит</div>
+        <div class="mini-panel">ОАК</div>
+        <div class="mini-num">44<span class="unit">%</span></div>
+        <div class="mini-ref">норма 40–48</div>
+      </div>
+    </div>
+
+    <div class="section-h" style="margin-top: 36px;">Остальное</div>
+    <div class="other-toggle">
+      <span class="triangle">▶</span>
+      <span class="count-num">51</span>
+      <span>показателей в норме · нажми чтобы развернуть</span>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px 20px; background: rgba(110,231,183,0.05); border-left: 2px solid #6ee7b7; border-radius: 8px; color: #93a0bf; font-size: 13px;">
+  Это полный мокап главной — sidebar слева, hero с холестерином, отклонения мочи рядом, pinned в норме компактной сеткой, остальное свёрнуто. Twitter/X-style плотность.
+</div>
+
+<div class="options" style="margin-top: 24px;">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Одобряю — реализуем такой</h3>
+      <p>Делаем по этому мокапу: тёмная палитра, hero/grid, Inter, sidebar. Дальше — страницы маркера и сдачи в том же языке.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tweak" onclick="toggleSelect(this)">
+    <div class="letter">~</div>
+    <div class="content">
+      <h3>Почти, но кое-что поменять</h3>
+      <p>Напишу в терминале — что именно подправить.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="restart" onclick="toggleSelect(this)">
+    <div class="letter">✗</div>
+    <div class="content">
+      <h3>Не то, начнём заново</h3>
+      <p>Хочу другой вайб / другой лейаут. Обсудим в терминале.</p>
+    </div>
+  </div>
+</div>

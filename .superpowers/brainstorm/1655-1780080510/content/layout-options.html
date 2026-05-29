@@ -1,0 +1,239 @@
+<h2>Три направления главной страницы</h2>
+<p class="subtitle">Тёмная Whoop/Oura палитра, pinned с трендами. Какой ритм тебе ближе?</p>
+
+<style>
+  .mock-card {
+    background: linear-gradient(180deg, #131a2d 0%, #0e1424 100%);
+    border: 1px solid #1f2940;
+    border-radius: 14px;
+    padding: 18px 18px 14px;
+    color: #d7dce8;
+    position: relative;
+    overflow: hidden;
+  }
+  .mock-card .name { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7d8aa5; font-weight: 500; }
+  .mock-card .panel { font-size: 10px; color: #4f5b78; font-style: italic; margin-top: 2px; }
+  .mock-card .value { font-size: 36px; font-weight: 600; color: #f4f6fb; margin-top: 12px; letter-spacing: -0.02em; line-height: 1; }
+  .mock-card .unit { font-size: 14px; font-weight: 400; color: #7d8aa5; margin-left: 4px; }
+  .mock-card .ref { font-size: 11px; color: #7d8aa5; margin-top: 8px; }
+  .mock-card .spark { margin-top: 12px; height: 32px; opacity: 0.95; }
+  .mock-card .flag-pill { position: absolute; top: 14px; right: 14px; font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 500; }
+  .pill-normal { background: #103a2a; color: #6ee7b7; }
+  .pill-low { background: #1a3155; color: #93c5fd; }
+  .pill-high { background: #432619; color: #fdba74; }
+
+  .hero-card {
+    background: radial-gradient(ellipse at top right, #1d2742 0%, #0e1424 70%);
+    border: 1px solid #2a3554;
+    border-radius: 18px;
+    padding: 28px 28px 22px;
+    color: #f4f6fb;
+    grid-column: span 2;
+  }
+  .hero-card .name { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #93a0bf; }
+  .hero-card .value { font-size: 72px; font-weight: 600; line-height: 1; margin-top: 16px; letter-spacing: -0.03em; }
+  .hero-card .unit { font-size: 18px; color: #93a0bf; margin-left: 8px; }
+  .hero-card .arrow { color: #fdba74; font-size: 18px; margin-left: 12px; }
+  .hero-card .ref { font-size: 12px; color: #93a0bf; margin-top: 12px; }
+  .hero-card .spark { margin-top: 16px; height: 56px; }
+
+  .panel-frame {
+    background: #0a0e1a;
+    border-radius: 16px;
+    padding: 24px;
+    color: #d7dce8;
+  }
+  .panel-frame h4 { color: #d7dce8; margin: 0 0 18px; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+  .panel-frame .panel-sub { color: #6e7a99; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+
+  .timeline-event {
+    border-left: 2px solid #2a3554;
+    padding: 0 0 18px 16px;
+    margin-left: 8px;
+    position: relative;
+  }
+  .timeline-event::before {
+    content: ''; position: absolute; left: -5px; top: 4px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #6ee7b7;
+  }
+  .timeline-event.alert::before { background: #fdba74; }
+  .timeline-event .date { font-size: 11px; color: #7d8aa5; }
+  .timeline-event .title { font-size: 13px; color: #e8ebf3; margin-top: 4px; font-weight: 500; }
+  .timeline-event .detail { font-size: 11px; color: #93a0bf; margin-top: 2px; }
+</style>
+
+<div class="cards">
+
+  <!-- OPTION A: Stat Board -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #0a0e1a; padding: 24px;">
+      <div class="panel-frame">
+        <div class="panel-sub">SNAPSHOT · 9 показателей</div>
+        <h4 style="margin-bottom: 16px;">В фокусе</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+          <div class="mock-card">
+            <span class="flag-pill pill-low">low</span>
+            <div class="name">Холестерин</div>
+            <div class="value">2.91<span class="unit">ммоль/л</span></div>
+            <div class="ref">норма 3.6–5.2</div>
+            <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none">
+              <path d="M0,8 L25,12 L50,18 L75,24 L100,26" stroke="#93c5fd" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="mock-card">
+            <span class="flag-pill pill-normal">norm</span>
+            <div class="name">Гемоглобин</div>
+            <div class="value">148<span class="unit">г/л</span></div>
+            <div class="ref">норма 130–160</div>
+            <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none">
+              <path d="M0,16 L25,18 L50,14 L75,16 L100,15" stroke="#6ee7b7" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="mock-card">
+            <span class="flag-pill pill-normal">norm</span>
+            <div class="name">СОЭ</div>
+            <div class="value">8<span class="unit">мм/ч</span></div>
+            <div class="ref">норма 2–15</div>
+            <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none">
+              <path d="M0,18 L25,14 L50,16 L75,12 L100,14" stroke="#6ee7b7" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="mock-card">
+            <span class="flag-pill pill-normal">norm</span>
+            <div class="name">Эритроциты</div>
+            <div class="value">5.1<span class="unit">×10¹²</span></div>
+            <div class="ref">норма 4.0–5.5</div>
+          </div>
+          <div class="mock-card">
+            <span class="flag-pill pill-normal">norm</span>
+            <div class="name">Лейкоциты</div>
+            <div class="value">6.4<span class="unit">×10⁹</span></div>
+            <div class="ref">норма 4.0–9.0</div>
+          </div>
+          <div class="mock-card">
+            <span class="flag-pill pill-normal">norm</span>
+            <div class="name">Тромбоциты</div>
+            <div class="value">245<span class="unit">×10⁹</span></div>
+            <div class="ref">норма 180–360</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Stat board</h3>
+      <p>Все pinned-маркеры одного размера, одной плотности. Спарклайны под значениями там где есть динамика. Информационно плотно, скан-друг.</p>
+    </div>
+  </div>
+
+  <!-- OPTION B: Hero + grid -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #0a0e1a; padding: 24px;">
+      <div class="panel-frame">
+        <div class="panel-sub">⚠ ТРЕБУЕТ ВНИМАНИЯ</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+          <div class="hero-card" style="grid-column: span 2;">
+            <div class="name">Холестерин общий</div>
+            <div class="value">2.91<span class="unit">ммоль/л</span><span class="arrow">↓</span></div>
+            <div class="ref">норма 3.6–5.2 · ниже на 19%</div>
+            <svg class="spark" viewBox="0 0 200 56" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="herograd" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#fdba74" stop-opacity="0.5"/>
+                  <stop offset="100%" stop-color="#fdba74" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,16 L50,22 L100,38 L150,46 L200,48 L200,56 L0,56 Z" fill="url(#herograd)"/>
+              <path d="M0,16 L50,22 L100,38 L150,46 L200,48" stroke="#fdba74" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+        </div>
+        <div class="panel-sub">В ФОКУСЕ</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+          <div class="mock-card" style="padding: 12px;">
+            <div class="name">Гемоглобин</div>
+            <div class="value" style="font-size: 22px;">148<span class="unit" style="font-size: 11px;">г/л</span></div>
+          </div>
+          <div class="mock-card" style="padding: 12px;">
+            <div class="name">СОЭ</div>
+            <div class="value" style="font-size: 22px;">8<span class="unit" style="font-size: 11px;">мм/ч</span></div>
+          </div>
+          <div class="mock-card" style="padding: 12px;">
+            <div class="name">Эритроц.</div>
+            <div class="value" style="font-size: 22px;">5.1</div>
+          </div>
+          <div class="mock-card" style="padding: 12px;">
+            <div class="name">Лейкоц.</div>
+            <div class="value" style="font-size: 22px;">6.4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Hero + grid</h3>
+      <p>Одно отклонение — большим героем с графиком и контекстом. Pinned в норме — компактной сеткой ниже. Иерархия важности.</p>
+    </div>
+  </div>
+
+  <!-- OPTION C: Timeline + side panel -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #0a0e1a; padding: 24px;">
+      <div class="panel-frame" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px;">
+        <div>
+          <div class="panel-sub">ЖУРНАЛ</div>
+          <h4>Последние сдачи</h4>
+          <div class="timeline-event alert">
+            <div class="date">25 ноя · 4 дня назад</div>
+            <div class="title">Холестерин общий</div>
+            <div class="detail">2.91 ниже нормы 3.6–5.2 ↓</div>
+          </div>
+          <div class="timeline-event">
+            <div class="date">25 ноя</div>
+            <div class="title">ОАК — 22 показателя</div>
+            <div class="detail">Все в норме</div>
+          </div>
+          <div class="timeline-event alert">
+            <div class="date">25 ноя</div>
+            <div class="title">Клин. анализ мочи</div>
+            <div class="detail">3 показателя выше нормы</div>
+          </div>
+          <div class="timeline-event">
+            <div class="date">25 ноя</div>
+            <div class="title">СОЭ, HBs, HIV, HCV</div>
+            <div class="detail">Все в норме</div>
+          </div>
+        </div>
+        <div>
+          <div class="panel-sub">В ФОКУСЕ</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="mock-card">
+              <div class="name">Холестерин</div>
+              <div class="value" style="font-size: 26px; color: #fdba74;">2.91</div>
+              <div class="ref">ммоль/л · low</div>
+            </div>
+            <div class="mock-card">
+              <div class="name">Гемоглобин</div>
+              <div class="value" style="font-size: 26px;">148</div>
+              <div class="ref">г/л · норма</div>
+            </div>
+            <div class="mock-card">
+              <div class="name">СОЭ</div>
+              <div class="value" style="font-size: 26px;">8</div>
+              <div class="ref">мм/ч · норма</div>
+            </div>
+            <div class="mock-card">
+              <div class="name">Лейкоциты</div>
+              <div class="value" style="font-size: 26px;">6.4</div>
+              <div class="ref">×10⁹ · норма</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Timeline + sidebar</h3>
+      <p>Слева — журнал «что случилось когда», справа — ключевые маркеры компактно. Хорошо если у тебя будет много сдач и важна хронология.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,159 @@
+<h2>Sidebar — финальный вид</h2>
+<p class="subtitle">Активные сейчас + roadmap «скоро» серым</p>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  .full-mock {
+    background: #050810;
+    border-radius: 16px;
+    color: #e3e7f1;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 720px;
+  }
+  .sidebar {
+    background: #0a0e1a;
+    border-right: 1px solid #1a2138;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .brand { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: #f4f6fb; margin-bottom: 28px; padding: 0 8px; display: flex; align-items: center; gap: 10px; }
+  .brand-dot { width: 9px; height: 9px; background: linear-gradient(135deg, #6ee7b7, #fdba74); border-radius: 50%; }
+
+  .nav-section { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #4f5b78; padding: 0 8px; margin: 18px 0 8px; font-weight: 500; }
+  .nav-section:first-of-type { margin-top: 0; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 10px; border-radius: 8px;
+    color: #93a0bf; font-size: 13px;
+    margin-bottom: 1px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .nav-item:hover { background: #0e1424; color: #e3e7f1; }
+  .nav-item.active {
+    background: linear-gradient(180deg, #1a2240 0%, #131a2d 100%);
+    color: #f4f6fb;
+    border: 1px solid #2a3554;
+    padding: 7px 9px;
+  }
+  .nav-item .icon {
+    width: 16px; text-align: center;
+    font-size: 14px; opacity: 0.7;
+  }
+  .nav-item.active .icon { opacity: 1; }
+  .nav-item .badge {
+    margin-left: auto;
+    background: #fdba74;
+    color: #1a0d05;
+    font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 999px;
+  }
+
+  .nav-item.soon {
+    color: #4f5b78;
+    cursor: not-allowed;
+  }
+  .nav-item.soon:hover { background: transparent; color: #4f5b78; }
+  .nav-item.soon .icon { opacity: 0.4; }
+  .nav-item.soon .badge {
+    background: transparent;
+    color: #4f5b78;
+    border: 1px solid #1f2940;
+    font-weight: 400;
+    padding: 0 6px;
+    margin-left: auto;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #1a2138;
+  }
+  .footer-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px;
+    color: #6e7a99;
+    font-size: 12px;
+  }
+  .footer-item .icon { font-size: 12px; }
+
+  .main { padding: 28px 36px; color: #93a0bf; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+</style>
+
+<div class="full-mock">
+  <div class="sidebar">
+    <div class="brand"><span class="brand-dot"></span>Health</div>
+
+    <div class="nav-section">Обзор</div>
+    <div class="nav-item active">
+      <span class="icon">⬢</span>Главная
+    </div>
+    <div class="nav-item">
+      <span class="icon">⊟</span>Архив сдач
+      <span class="badge">9</span>
+    </div>
+
+    <div class="nav-section">Данные</div>
+    <div class="nav-item">
+      <span class="icon">↥</span>Загрузить
+    </div>
+    <div class="nav-item">
+      <span class="icon">℞</span>Лекарства и БАД
+    </div>
+
+    <div class="nav-section">Дневники <span style="color:#3a4660; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 9px; margin-left: 4px;">скоро</span></div>
+    <div class="nav-item soon">
+      <span class="icon">◐</span>Самочувствие
+      <span class="badge">soon</span>
+    </div>
+    <div class="nav-item soon">
+      <span class="icon">⌚</span>Whoop
+      <span class="badge">soon</span>
+    </div>
+    <div class="nav-item soon">
+      <span class="icon">≡</span>Симптомы
+      <span class="badge">soon</span>
+    </div>
+    <div class="nav-item soon">
+      <span class="icon">⊕</span>Питание
+      <span class="badge">soon</span>
+    </div>
+    <div class="nav-item soon">
+      <span class="icon">↻</span>Тренировки
+      <span class="badge">soon</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="footer-item">
+        <span class="icon">⚙</span>Настройки
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    Sidebar окончательный.
+  </div>
+</div>
+
+<div class="options" style="margin-top: 24px;">
+  <div class="option" data-choice="ok" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Норм, идём дальше</h3>
+      <p>Sidebar утверждён. Можем переходить к финальному дизайну страниц и сохранять спеку.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tweak" onclick="toggleSelect(this)">
+    <div class="letter">~</div>
+    <div class="content">
+      <h3>Подправить</h3>
+      <p>Напиши в терминале что изменить — порядок, названия, иконки, группировка.</p>
+    </div>
+  </div>
+</div>

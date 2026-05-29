@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.kostya.health-bot</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/konstantin/Library/pnpm/pnpm</string>
+    <string>--filter</string>
+    <string>@health/telegram-bot</string>
+    <string>exec</string>
+    <string>tsx</string>
+    <string>src/index.ts</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/konstantin/projects/health</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HEALTH_VAULT_PATH</key>
+    <string>/Users/konstantin/Documents/AI/health</string>
+    <key>TELEGRAM_BOT_TOKEN</key>
+    <string>8851934442:AAFiXAmylkeLnmPa-jZutx93BlW87LATxbw</string>
+    <key>PATH</key>
+    <string>/Users/konstantin/Library/pnpm:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key>
+  <string>/Users/konstantin/Documents/AI/health/.telegram-bot.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/konstantin/Documents/AI/health/.telegram-bot.log</string>
+</dict>
+</plist>

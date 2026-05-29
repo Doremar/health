@@ -1,5 +1,5 @@
-import { listMarkerSummaries, listMarkerHistoryValues } from "@/lib/queries";
-import { classifyMarker, type Flag } from "@health/shared";
+import { listMarkerSummaries, listMarkerHistoryValues, getPinnedOverrides } from "@/lib/queries";
+import { classifyMarkerWithOverrides, type Flag } from "@health/shared";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { HeroCard } from "@/components/HeroCard";
@@ -11,11 +11,12 @@ const FLAG_PRIORITY: Record<Flag, number> = { critical: 0, high: 1, low: 2, norm
 
 export default function HomePage() {
   const summaries = listMarkerSummaries();
+  const pinnedOverrides = getPinnedOverrides();
 
   const abnormal = summaries.filter((s) => s.last_flag !== "normal");
-  const pinned = summaries.filter((s) => classifyMarker(s.code, s.last_flag) === "pinned");
+  const pinned = summaries.filter((s) => classifyMarkerWithOverrides(s.code, s.last_flag, pinnedOverrides) === "pinned");
   const other = summaries.filter((s) => {
-    const c = classifyMarker(s.code, s.last_flag);
+    const c = classifyMarkerWithOverrides(s.code, s.last_flag, pinnedOverrides);
     return c === "other" || c === "screening";
   });
 

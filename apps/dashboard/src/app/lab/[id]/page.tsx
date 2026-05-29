@@ -1,5 +1,16 @@
 import { getLab, listLabMarkers } from "@/lib/queries";
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/PageHeader";
+import { FlagPill } from "@/components/FlagPill";
+import Link from "next/link";
+import type { Flag } from "@health/shared";
+
+interface MarkerRow {
+  code: string; name: string;
+  value: number | null; value_text: string | null; unit: string | null;
+  ref_low: number | null; ref_high: number | null; ref_text: string | null;
+  flag: Flag;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -7,49 +18,66 @@ export default async function LabPage({ params }: { params: Promise<{ id: string
   const { id } = await params;
   const lab = getLab(Number(id));
   if (!lab) return notFound();
-  const markers = listLabMarkers(lab.id) as any[];
+  const markers = listLabMarkers(lab.id) as MarkerRow[];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {lab.panel ? lab.panel + " — " : ""}{lab.lab_name} — {lab.date}
-        </h1>
-        {lab.needs_review === 1 && (
-          <div className="mt-1 inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">проверить</div>
-        )}
+    <>
+      <PageHeader
+        title={`${lab.panel ? lab.panel + " — " : ""}${lab.lab_name}`}
+        meta={lab.date}
+      />
+      {lab.needs_review === 1 && (
+        <div className="-mt-4 mb-5 inline-block bg-flag-high/10 text-flag-high text-xs px-2.5 py-1 rounded-full">
+          требует проверки
+        </div>
+      )}
+
+      <div className="bg-bg-surface border border-border-soft rounded-2xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-bg-elevated text-text-faint">
+            <tr>
+              <th className="p-3 text-left font-medium">Код</th>
+              <th className="p-3 text-left font-medium">Название</th>
+              <th className="p-3 text-right font-medium">Значение</th>
+              <th className="p-3 text-left font-medium">Норма</th>
+              <th className="p-3 text-center font-medium">Флаг</th>
+            </tr>
+          </thead>
+          <tbody>
+            {markers.map((m, i) => (
+              <tr key={i} className="border-t border-border-soft">
+                <td className="p-3">
+                  <Link href={`/marker/${m.code}`} className="text-flag-low hover:underline">{m.code}</Link>
+                </td>
+                <td className="p-3 text-text-muted">{m.name}</td>
+                <td className="p-3 text-right tabular text-text-primary">
+                  {m.value ?? m.value_text ?? "—"} <span className="text-text-faint">{m.unit}</span>
+                </td>
+                <td className="p-3 text-text-faint">
+                  {m.ref_low ?? "—"}–{m.ref_high ?? "—"}
+                  {m.ref_text && <span className="ml-1">({m.ref_text})</span>}
+                </td>
+                <td className="p-3 text-center"><FlagPill flag={m.flag} size="sm" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <table className="w-full text-sm border-collapse">
-        <thead className="bg-neutral-100">
-          <tr>
-            <th className="p-2 text-left">Код</th>
-            <th className="p-2 text-left">Название</th>
-            <th className="p-2 text-right">Значение</th>
-            <th className="p-2 text-left">Норма</th>
-            <th className="p-2 text-center">Флаг</th>
-          </tr>
-        </thead>
-        <tbody>
-          {markers.map((m, i) => (
-            <tr key={i} className="border-t">
-              <td className="p-2"><a className="text-blue-700" href={`/marker/${m.code}`}>{m.code}</a></td>
-              <td className="p-2">{m.name}</td>
-              <td className="p-2 text-right">{m.value ?? m.value_text ?? "—"} {m.unit}</td>
-              <td className="p-2">{m.ref_low ?? "—"}–{m.ref_high ?? "—"} {m.ref_text ? `(${m.ref_text})` : ""}</td>
-              <td className="p-2 text-center">{m.flag}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="flex gap-3">
-        <a className="text-blue-700 underline" href={`/api/file?path=${encodeURIComponent(lab.source_file)}`}>Открыть PDF</a>
+      <div className="mt-6 flex gap-5 text-sm">
+        <a
+          href={`/api/file?path=${encodeURIComponent(lab.source_file)}`}
+          className="text-flag-low hover:underline"
+        >
+          Открыть PDF
+        </a>
         <form action="/api/delete-lab" method="POST">
           <input type="hidden" name="id" value={lab.id} />
-          <button className="text-red-600 underline" type="submit">Удалить сдачу</button>
+          <button type="submit" className="text-flag-critical hover:underline">
+            Удалить сдачу
+          </button>
         </form>
       </div>
-    </div>
+    </>
   );
 }

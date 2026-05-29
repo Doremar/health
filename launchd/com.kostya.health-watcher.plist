@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.kostya.health-watcher</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/konstantin/Library/pnpm/pnpm</string>
+    <string>--filter</string><string>@health/importer</string>
+    <string>exec</string><string>tsx</string><string>src/watch.ts</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/konstantin/projects/health</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HEALTH_VAULT_PATH</key><string>/Users/konstantin/Documents/AI/health</string>
+    <key>CLAUDE_BIN</key><string>/Users/konstantin/.local/bin/claude</string>
+    <key>PATH</key><string>/Users/konstantin/Library/pnpm:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/konstantin/Documents/AI/health/.import.log</string>
+  <key>StandardErrorPath</key><string>/Users/konstantin/Documents/AI/health/.import.log</string>
+</dict>
+</plist>

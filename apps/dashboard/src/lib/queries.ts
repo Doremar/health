@@ -95,3 +95,34 @@ export function listMarkerHistoryValues(code: string): number[] {
   `).all(code) as { value: number }[];
   return rows.map((r) => r.value);
 }
+
+export interface MarkerCodeInfo {
+  code: string;
+  name: string;
+  count: number;
+}
+
+export function listAllMarkerCodes(): MarkerCodeInfo[] {
+  return db().prepare(`
+    SELECT m.code,
+           (SELECT name FROM markers WHERE code = m.code ORDER BY id DESC LIMIT 1) AS name,
+           COUNT(*) AS count
+    FROM markers m
+    GROUP BY m.code
+    ORDER BY m.code
+  `).all() as MarkerCodeInfo[];
+}
+
+export function getPinnedOverrides(): Set<string> {
+  const rows = db().prepare("SELECT code FROM marker_settings WHERE pinned = 1").all() as { code: string }[];
+  return new Set(rows.map((r) => r.code));
+}
+
+export function togglePinned(code: string): void {
+  const existing = db().prepare("SELECT pinned FROM marker_settings WHERE code = ?").get(code) as { pinned: number } | undefined;
+  if (existing) {
+    db().prepare("UPDATE marker_settings SET pinned = ? WHERE code = ?").run(existing.pinned ? 0 : 1, code);
+  } else {
+    db().prepare("INSERT INTO marker_settings (code, pinned) VALUES (?, 1)").run(code);
+  }
+}

@@ -1,19 +1,20 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata = { title: "Health Dashboard" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
-      <body className="bg-neutral-50 text-neutral-900">
-        <header className="border-b bg-white px-6 py-3">
-          <nav className="flex gap-6 text-sm">
-            <a href="/" className="font-semibold">Health</a>
-            <a href="/archive">Архив</a>
-            <a href="/import">Импорт</a>
-          </nav>
-        </header>
-        <main className="px-6 py-6 max-w-6xl mx-auto">{children}</main>
+    <html lang="ru" className={inter.variable}>
+      <body className="font-sans bg-bg-page text-text-strong min-h-screen">
+        {children}
       </body>
     </html>
   );

@@ -2,4 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-body { font-family: ui-sans-serif, system-ui, sans-serif; }
+:root {
+  --bg-page: #050810;
+  --bg-sidebar: #0a0e1a;
+  --bg-surface: #0e1424;
+  --bg-elevated: #131a2d;
+
+  --border-soft: #1a2138;
+  --border-card: #1f2940;
+  --border-active: #2a3554;
+
+  --text-primary: #f4f6fb;
+  --text-strong: #e3e7f1;
+  --text-muted: #c8d0e2;
+  --text-subtle: #93a0bf;
+  --text-faint: #7d8aa5;
+  --text-disabled: #4f5b78;
+
+  --flag-normal: #6ee7b7;
+  --flag-low: #93c5fd;
+  --flag-high: #fdba74;
+  --flag-critical: #fca5a5;
+
+  --flag-normal-bg: rgba(110, 231, 183, 0.10);
+  --flag-low-bg: rgba(147, 197, 253, 0.10);
+  --flag-high-bg: rgba(253, 186, 116, 0.12);
+  --flag-crit-bg: rgba(252, 165, 165, 0.12);
+}
+
+html, body {
+  background: var(--bg-page);
+  color: var(--text-strong);
+}
+
+body {
+  font-feature-settings: "cv02", "cv11";
+}
+
+.tabular { font-variant-numeric: tabular-nums; }

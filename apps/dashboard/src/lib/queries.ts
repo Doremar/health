@@ -82,3 +82,7 @@ export function listAllLabs(): LabHeader[] {
 export function deleteLab(id: number): void {
   db().prepare("DELETE FROM labs WHERE id = ?").run(id);
 }
+
+export function countLabs(): number {
+  return (db().prepare("SELECT COUNT(*) AS n FROM labs").get() as { n: number }).n;
+}

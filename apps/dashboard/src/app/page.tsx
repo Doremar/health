@@ -1,4 +1,5 @@
 import { listMarkerSummaries } from "@/lib/queries";
+import { classifyMarker } from "@health/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +12,16 @@ function badge(flag: string): string {
 
 export default function HomePage() {
   const summaries = listMarkerSummaries();
-  const abnormal = summaries.filter((s) => s.last_flag !== "normal");
-  const normal = summaries.filter((s) => s.last_flag === "normal");
+
+  const pinned = summaries.filter((s) => classifyMarker(s.code, s.last_flag) === "pinned");
+  const abnormal = summaries.filter((s) => classifyMarker(s.code, s.last_flag) === "abnormal");
+  const other = summaries.filter((s) => {
+    const c = classifyMarker(s.code, s.last_flag);
+    return c === "other" || c === "screening";
+  });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h1 className="text-2xl font-semibold">Snapshot</h1>
 
       {abnormal.length > 0 && (
@@ -28,11 +34,31 @@ export default function HomePage() {
       )}
 
       <section>
-        <h2 className="text-lg font-medium mb-3">В норме ({normal.length})</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {normal.map((s) => <Card key={s.code} s={s} />)}
-        </div>
+        <h2 className="text-lg font-medium mb-3">
+          В фокусе {pinned.length > 0 && <span className="text-neutral-400 font-normal">({pinned.length})</span>}
+        </h2>
+        {pinned.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {pinned.map((s) => <Card key={s.code} s={s} />)}
+          </div>
+        ) : (
+          <div className="text-sm text-neutral-500">
+            Ни одного главного показателя пока не загружено. См. PINNED_CODES в <code>packages/shared/src/markers-config.ts</code>.
+          </div>
+        )}
       </section>
+
+      {other.length > 0 && (
+        <details className="group">
+          <summary className="text-lg font-medium cursor-pointer select-none list-none flex items-center gap-2">
+            <span className="inline-block transition-transform group-open:rotate-90">▶</span>
+            Остальное в норме ({other.length})
+          </summary>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {other.map((s) => <Card key={s.code} s={s} />)}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

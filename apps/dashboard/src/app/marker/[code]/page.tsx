@@ -14,7 +14,10 @@ export default async function MarkerPage({ params }: { params: Promise<{ code: s
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">{meta.name}</h1>
-        <div className="text-sm text-neutral-500">
+        {meta.panel && (
+          <div className="text-sm text-neutral-600 italic">{meta.panel}</div>
+        )}
+        <div className="mt-1 text-sm text-neutral-500">
           код: <code>{code}</code> • норма {meta.ref_low ?? "?"}–{meta.ref_high ?? "?"} {meta.unit}
         </div>
       </div>

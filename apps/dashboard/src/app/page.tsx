@@ -67,10 +67,13 @@ function Card({ s }: { s: ReturnType<typeof listMarkerSummaries>[number] }) {
   const value = s.last_value !== null ? s.last_value : s.last_value_text ?? "—";
   return (
     <a href={`/marker/${s.code}`} className="block rounded-lg border bg-white p-4 hover:shadow-sm transition">
-      <div className="flex items-baseline justify-between">
-        <div className="font-medium">{s.name}</div>
-        <span className={`text-xs px-2 py-0.5 rounded ${badge(s.last_flag)}`}>{s.last_flag}</span>
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="font-medium leading-tight">{s.name}</div>
+        <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${badge(s.last_flag)}`}>{s.last_flag}</span>
       </div>
+      {s.last_panel && (
+        <div className="mt-0.5 text-xs text-neutral-500 italic">{s.last_panel}</div>
+      )}
       <div className="mt-1 text-2xl font-semibold">{value} <span className="text-sm font-normal text-neutral-500">{s.unit}</span></div>
       <div className="mt-1 text-xs text-neutral-500">{s.last_date} • норма {s.ref_low ?? "?"}–{s.ref_high ?? "?"}</div>
     </a>

@@ -12,13 +12,16 @@ export interface MarkerSummary {
   last_flag: Flag;
   ref_low: number | null;
   ref_high: number | null;
+  last_panel: string | null;
+  last_lab_name: string;
 }
 
 export function listMarkerSummaries(): MarkerSummary[] {
   return db().prepare(`
     SELECT m.code, m.name, m.value AS last_value, m.value_text AS last_value_text,
            m.unit, l.date AS last_date, m.flag AS last_flag,
-           m.ref_low, m.ref_high
+           m.ref_low, m.ref_high,
+           l.panel AS last_panel, l.lab_name AS last_lab_name
     FROM markers m
     JOIN labs l ON l.id = m.lab_id
     JOIN (
@@ -48,10 +51,11 @@ export function listMarkerHistory(code: string): MarkerHistoryPoint[] {
   `).all(code) as MarkerHistoryPoint[];
 }
 
-export function getMarkerMeta(code: string): { name: string; ref_low: number | null; ref_high: number | null; unit: string | null } | null {
+export function getMarkerMeta(code: string): { name: string; ref_low: number | null; ref_high: number | null; unit: string | null; panel: string | null } | null {
   return db().prepare(`
-    SELECT name, ref_low, ref_high, unit
-    FROM markers WHERE code = ? ORDER BY id DESC LIMIT 1
+    SELECT m.name, m.ref_low, m.ref_high, m.unit, l.panel
+    FROM markers m JOIN labs l ON l.id = m.lab_id
+    WHERE m.code = ? ORDER BY m.id DESC LIMIT 1
   `).get(code) as any ?? null;
 }
 

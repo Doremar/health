@@ -1,6 +1,9 @@
 import { listMarkerHistory, getMarkerMeta } from "@/lib/queries";
 import { MarkerChart } from "@/components/MarkerChart";
+import { PageHeader } from "@/components/PageHeader";
+import { FlagPill } from "@/components/FlagPill";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -11,35 +14,48 @@ export default async function MarkerPage({ params }: { params: Promise<{ code: s
   const history = listMarkerHistory(code);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{meta.name}</h1>
-        {meta.panel && (
-          <div className="text-sm text-neutral-600 italic">{meta.panel}</div>
-        )}
-        <div className="mt-1 text-sm text-neutral-500">
-          код: <code>{code}</code> • норма {meta.ref_low ?? "?"}–{meta.ref_high ?? "?"} {meta.unit}
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title={meta.name}
+        meta={`код: ${code} · норма ${meta.ref_low ?? "?"}–${meta.ref_high ?? "?"} ${meta.unit ?? ""}`}
+      />
+      {meta.panel && (
+        <div className="-mt-5 mb-7 text-sm italic text-text-subtle">{meta.panel}</div>
+      )}
 
-      <MarkerChart data={history.map((p) => ({ date: p.date, value: p.value, lab_name: p.lab_name }))}
-                   refLow={meta.ref_low} refHigh={meta.ref_high} unit={meta.unit} />
+      <MarkerChart
+        data={history.map((p) => ({ date: p.date, value: p.value, lab_name: p.lab_name }))}
+        refLow={meta.ref_low}
+        refHigh={meta.ref_high}
+        unit={meta.unit}
+      />
 
-      <table className="w-full text-sm border-collapse">
-        <thead className="bg-neutral-100">
-          <tr><th className="p-2 text-left">Дата</th><th className="p-2 text-left">Лаборатория</th><th className="p-2 text-right">Значение</th><th className="p-2">Флаг</th></tr>
-        </thead>
-        <tbody>
-          {history.map((p, i) => (
-            <tr key={i} className="border-t">
-              <td className="p-2"><a className="text-blue-700" href={`/lab/${p.lab_id}`}>{p.date}</a></td>
-              <td className="p-2">{p.lab_name}</td>
-              <td className="p-2 text-right">{p.value ?? "—"} {p.unit}</td>
-              <td className="p-2 text-center">{p.flag}</td>
+      <div className="mt-7 bg-bg-surface border border-border-soft rounded-2xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-bg-elevated text-text-faint">
+            <tr>
+              <th className="p-3 text-left font-medium">Дата</th>
+              <th className="p-3 text-left font-medium">Лаборатория</th>
+              <th className="p-3 text-right font-medium">Значение</th>
+              <th className="p-3 text-center font-medium">Флаг</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {history.map((p, i) => (
+              <tr key={i} className="border-t border-border-soft">
+                <td className="p-3">
+                  <Link href={`/lab/${p.lab_id}`} className="text-flag-low hover:underline">{p.date}</Link>
+                </td>
+                <td className="p-3 text-text-muted">{p.lab_name}</td>
+                <td className="p-3 text-right tabular text-text-primary">
+                  {p.value ?? "—"} <span className="text-text-faint">{p.unit}</span>
+                </td>
+                <td className="p-3 text-center"><FlagPill flag={p.flag} size="sm" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

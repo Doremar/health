@@ -23,8 +23,8 @@
     <key>PATH</key>
     <string>/Users/konstantin/Library/pnpm:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
-  <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><true/>
+  <key>RunAtLoad</key><false/>
+  <key>KeepAlive</key><false/>
   <key>StandardOutPath</key>
   <string>/Users/konstantin/Documents/AI/health/.telegram-bot.log</string>
   <key>StandardErrorPath</key>

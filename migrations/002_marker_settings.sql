@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS marker_settings (
+  code   TEXT PRIMARY KEY,
+  pinned INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT OR IGNORE INTO _schema (version) VALUES (2);

@@ -1,5 +1,5 @@
 import "server-only";
-import { db } from "./db.js";
+import { db } from "./db";
 import type { Flag } from "@health/shared";
 
 export interface MarkerSummary {

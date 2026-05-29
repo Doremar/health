@@ -1,4 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { Flag } from "@health/shared";
+import type DatabaseSync from "better-sqlite3";
 
 export interface MarkdownLab {
   date: string;
@@ -91,4 +94,36 @@ export function renderLabMarkdown({ lab, markers }: MarkdownInput): string {
   lines.push("");
 
   return lines.join("\n");
+}
+
+export async function regenerateAllMarkdown(db: DatabaseSync.Database): Promise<number> {
+  // Lazy-import VAULT to avoid requiring HEALTH_VAULT_PATH at module load time
+  const { VAULT } = await import("@health/shared");
+
+  // Clear vault/labs/*.md (but not .gitkeep)
+  for (const f of fs.readdirSync(VAULT.labs)) {
+    if (f.endsWith(".md")) fs.unlinkSync(path.join(VAULT.labs, f));
+  }
+
+  const labs = db.prepare("SELECT * FROM labs ORDER BY date").all() as Array<{
+    id: number; date: string; lab_name: string; panel: string | null; source_file: string;
+  }>;
+
+  let count = 0;
+  for (const lab of labs) {
+    const markers = db.prepare(`
+      SELECT code, name, value, value_text, unit, ref_low, ref_high, ref_text, flag
+      FROM markers WHERE lab_id = ? ORDER BY id
+    `).all(lab.id) as MarkdownMarker[];
+
+    const ext = path.extname(lab.source_file);
+    const mdName = path.basename(lab.source_file).replace(ext, ".md");
+    const md = renderLabMarkdown({
+      lab: { date: lab.date, lab_name: lab.lab_name, panel: lab.panel, source_file: lab.source_file },
+      markers,
+    });
+    fs.writeFileSync(path.join(VAULT.labs, mdName), md);
+    count++;
+  }
+  return count;
 }

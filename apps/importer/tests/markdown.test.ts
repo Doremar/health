@@ -75,3 +75,10 @@ describe("renderLabMarkdown", () => {
     expect(md).toContain("abnormal_markers: []");
   });
 });
+
+describe("regenerateAllMarkdown (smoke)", () => {
+  it("compiles and is exported", async () => {
+    const { regenerateAllMarkdown } = await import("../src/pipeline/markdown.js");
+    expect(typeof regenerateAllMarkdown).toBe("function");
+  });
+});

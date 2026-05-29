@@ -86,3 +86,12 @@ export function deleteLab(id: number): void {
 export function countLabs(): number {
   return (db().prepare("SELECT COUNT(*) AS n FROM labs").get() as { n: number }).n;
 }
+
+export function listMarkerHistoryValues(code: string): number[] {
+  const rows = db().prepare(`
+    SELECT m.value FROM markers m JOIN labs l ON l.id = m.lab_id
+    WHERE m.code = ? AND m.value IS NOT NULL
+    ORDER BY l.date
+  `).all(code) as { value: number }[];
+  return rows.map((r) => r.value);
+}

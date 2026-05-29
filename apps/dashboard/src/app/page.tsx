@@ -1,81 +1,105 @@
-import { listMarkerSummaries } from "@/lib/queries";
-import { classifyMarker } from "@health/shared";
+import { listMarkerSummaries, listMarkerHistoryValues } from "@/lib/queries";
+import { classifyMarker, type Flag } from "@health/shared";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
+import { HeroCard } from "@/components/HeroCard";
+import { MiniCard } from "@/components/MiniCard";
 
 export const dynamic = "force-dynamic";
 
-function badge(flag: string): string {
-  if (flag === "low") return "bg-blue-100 text-blue-800";
-  if (flag === "high") return "bg-orange-100 text-orange-800";
-  if (flag === "critical") return "bg-red-100 text-red-800";
-  return "bg-emerald-100 text-emerald-800";
-}
+const FLAG_PRIORITY: Record<Flag, number> = { critical: 0, high: 1, low: 2, normal: 3 };
 
 export default function HomePage() {
   const summaries = listMarkerSummaries();
 
+  const abnormal = summaries.filter((s) => s.last_flag !== "normal");
   const pinned = summaries.filter((s) => classifyMarker(s.code, s.last_flag) === "pinned");
-  const abnormal = summaries.filter((s) => classifyMarker(s.code, s.last_flag) === "abnormal");
   const other = summaries.filter((s) => {
     const c = classifyMarker(s.code, s.last_flag);
     return c === "other" || c === "screening";
   });
 
-  return (
-    <div className="space-y-10">
-      <h1 className="text-2xl font-semibold">Snapshot</h1>
+  abnormal.sort((a, b) => FLAG_PRIORITY[a.last_flag] - FLAG_PRIORITY[b.last_flag]);
+  const hero = abnormal[0];
+  const restAbnormal = abnormal.slice(1);
 
-      {abnormal.length > 0 && (
-        <section>
-          <h2 className="text-lg font-medium mb-3">⚠ Отклонения ({abnormal.length})</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {abnormal.map((s) => <Card key={s.code} s={s} />)}
-          </div>
-        </section>
+  const heroHistory = hero ? listMarkerHistoryValues(hero.code) : undefined;
+
+  const meta = summaries.length === 0
+    ? "БД пуста — загрузи первый PDF"
+    : `${summaries.length} показателей · последнее обновление ${summaries[0]?.last_date ?? "—"}`;
+
+  return (
+    <>
+      <PageHeader title="Snapshot" meta={meta} />
+
+      {hero && (
+        <>
+          <SectionHeader label="Требует внимания" count={abnormal.length} icon="⚠" />
+          <HeroCard
+            code={hero.code}
+            name={hero.name}
+            panel={hero.last_panel}
+            labName={hero.last_lab_name}
+            value={hero.last_value}
+            valueText={hero.last_value_text}
+            unit={hero.unit}
+            refLow={hero.ref_low}
+            refHigh={hero.ref_high}
+            flag={hero.last_flag}
+            history={heroHistory && heroHistory.length >= 2 ? heroHistory : undefined}
+          />
+        </>
       )}
 
-      <section>
-        <h2 className="text-lg font-medium mb-3">
-          В фокусе {pinned.length > 0 && <span className="text-neutral-400 font-normal">({pinned.length})</span>}
-        </h2>
-        {pinned.length > 0 ? (
+      {restAbnormal.length > 0 && (
+        <>
+          <SectionHeader label="Также вне нормы" count={restAbnormal.length} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {pinned.map((s) => <Card key={s.code} s={s} />)}
+            {restAbnormal.map((s) => (
+              <MiniCard key={s.code}
+                code={s.code} name={s.name} panel={s.last_panel}
+                value={s.last_value} valueText={s.last_value_text} unit={s.unit}
+                refLow={s.ref_low} refHigh={s.ref_high} flag={s.last_flag} />
+            ))}
           </div>
-        ) : (
-          <div className="text-sm text-neutral-500">
-            Ни одного главного показателя пока не загружено. См. PINNED_CODES в <code>packages/shared/src/markers-config.ts</code>.
-          </div>
-        )}
-      </section>
+        </>
+      )}
+
+      <SectionHeader label="В фокусе" count={pinned.length} />
+      {pinned.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {pinned.map((s) => (
+            <MiniCard key={s.code}
+              code={s.code} name={s.name} panel={s.last_panel}
+              value={s.last_value} valueText={s.last_value_text} unit={s.unit}
+              refLow={s.ref_low} refHigh={s.ref_high} flag={s.last_flag}
+              sparkline={listMarkerHistoryValues(s.code)} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm text-text-faint">
+          Ни одного главного показателя пока не загружено. См. <code>PINNED_CODES</code> в <code>packages/shared/src/markers-config.ts</code>.
+        </div>
+      )}
 
       {other.length > 0 && (
-        <details className="group">
-          <summary className="text-lg font-medium cursor-pointer select-none list-none flex items-center gap-2">
-            <span className="inline-block transition-transform group-open:rotate-90">▶</span>
-            Остальное в норме ({other.length})
+        <details className="group mt-9">
+          <summary className="flex items-center gap-2.5 px-4 py-3.5 bg-bg-surface border border-border-soft rounded-xl cursor-pointer text-text-subtle text-[13px] hover:border-border-card transition-colors list-none">
+            <span className="text-text-disabled transition-transform group-open:rotate-90">▶</span>
+            <span className="text-text-primary font-medium">{other.length}</span>
+            <span>показателей в норме · нажми чтобы развернуть</span>
           </summary>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {other.map((s) => <Card key={s.code} s={s} />)}
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {other.map((s) => (
+              <MiniCard key={s.code}
+                code={s.code} name={s.name} panel={s.last_panel}
+                value={s.last_value} valueText={s.last_value_text} unit={s.unit}
+                refLow={s.ref_low} refHigh={s.ref_high} flag={s.last_flag} />
+            ))}
           </div>
         </details>
       )}
-    </div>
-  );
-}
-
-function Card({ s }: { s: ReturnType<typeof listMarkerSummaries>[number] }) {
-  const value = s.last_value !== null ? s.last_value : s.last_value_text ?? "—";
-  return (
-    <a href={`/marker/${s.code}`} className="block rounded-lg border bg-white p-4 hover:shadow-sm transition">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="font-medium leading-tight">{s.name}</div>
-        <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${badge(s.last_flag)}`}>{s.last_flag}</span>
-      </div>
-      {s.last_panel && (
-        <div className="mt-0.5 text-xs text-neutral-500 italic">{s.last_panel}</div>
-      )}
-      <div className="mt-1 text-2xl font-semibold">{value} <span className="text-sm font-normal text-neutral-500">{s.unit}</span></div>
-      <div className="mt-1 text-xs text-neutral-500">{s.last_date} • норма {s.ref_low ?? "?"}–{s.ref_high ?? "?"}</div>
-    </a>
+    </>
   );
 }

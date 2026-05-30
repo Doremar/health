@@ -328,6 +328,96 @@ export function listRecentWorkouts(limit = 30): WhoopWorkoutRow[] {
   ).all(limit) as WhoopWorkoutRow[];
 }
 
+// ============= Nutrition =============
+
+export interface NutritionLogRow {
+  id: number;
+  ts: string;
+  description: string | null;
+  image_path: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  fat_g: number | null;
+  carbs_g: number | null;
+  fiber_g: number | null;
+  source: string;
+  confidence: string | null;
+}
+
+export interface NutritionDailyTotal {
+  date: string;
+  calories: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+  count: number;
+}
+
+export interface NutritionTargetRow {
+  daily_calories: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+}
+
+export function getNutritionTarget(): NutritionTargetRow {
+  return db().prepare(
+    "SELECT daily_calories, protein_g, fat_g, carbs_g FROM nutrition_targets WHERE id = 1"
+  ).get() as NutritionTargetRow;
+}
+
+export function getNutritionToday(): NutritionDailyTotal {
+  const row = db().prepare(`
+    SELECT
+      date('now', 'localtime') AS date,
+      COALESCE(SUM(calories), 0) AS calories,
+      COALESCE(SUM(protein_g), 0) AS protein_g,
+      COALESCE(SUM(fat_g), 0)    AS fat_g,
+      COALESCE(SUM(carbs_g), 0)  AS carbs_g,
+      COUNT(*) AS count
+    FROM nutrition_logs
+    WHERE date(ts, 'localtime') = date('now', 'localtime')
+  `).get() as NutritionDailyTotal;
+  return row;
+}
+
+export function listNutritionToday(): NutritionLogRow[] {
+  return db().prepare(`
+    SELECT id, ts, description, image_path, calories, protein_g, fat_g, carbs_g, fiber_g, source, confidence
+    FROM nutrition_logs
+    WHERE date(ts, 'localtime') = date('now', 'localtime')
+    ORDER BY ts
+  `).all() as NutritionLogRow[];
+}
+
+export function listNutritionByDay(days = 14): NutritionDailyTotal[] {
+  return db().prepare(`
+    SELECT
+      date(ts, 'localtime') AS date,
+      COALESCE(SUM(calories), 0) AS calories,
+      COALESCE(SUM(protein_g), 0) AS protein_g,
+      COALESCE(SUM(fat_g), 0)    AS fat_g,
+      COALESCE(SUM(carbs_g), 0)  AS carbs_g,
+      COUNT(*) AS count
+    FROM nutrition_logs
+    WHERE date(ts, 'localtime') >= date('now', 'localtime', ?)
+    GROUP BY date(ts, 'localtime')
+    ORDER BY date DESC
+  `).all(`-${days} days`) as NutritionDailyTotal[];
+}
+
+export function setNutritionTarget(t: NutritionTargetRow): void {
+  db().prepare(`
+    UPDATE nutrition_targets
+       SET daily_calories = ?, protein_g = ?, fat_g = ?, carbs_g = ?, updated_at = ?
+     WHERE id = 1
+  `).run(t.daily_calories, t.protein_g, t.fat_g, t.carbs_g, new Date().toISOString());
+}
+
+export function deleteNutritionLog(id: number): void {
+  db().prepare("DELETE FROM nutrition_logs WHERE id = ?").run(id);
+}
+
 export function getWhoopSummary(): {
   latestRecovery: number | null;
   latestStrain: number | null;

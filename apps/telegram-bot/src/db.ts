@@ -144,3 +144,95 @@ export function logIntake(input: {
   );
   return Number(info.lastInsertRowid);
 }
+
+// ============= Nutrition =============
+
+export interface NutritionInput {
+  ts?: string;
+  chat_id: number;
+  description?: string;
+  image_path?: string;
+  calories?: number;
+  protein_g?: number;
+  fat_g?: number;
+  carbs_g?: number;
+  fiber_g?: number;
+  source: "telegram_photo" | "telegram_text" | "manual";
+  confidence?: "high" | "medium" | "low";
+  notes?: string;
+  raw_response?: string;
+}
+
+export function logNutrition(input: NutritionInput): number {
+  const info = db().prepare(`
+    INSERT INTO nutrition_logs
+      (ts, chat_id, description, image_path, calories, protein_g, fat_g, carbs_g, fiber_g, source, confidence, notes, raw_response)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    input.ts ?? new Date().toISOString(),
+    input.chat_id,
+    input.description ?? null,
+    input.image_path ?? null,
+    input.calories ?? null,
+    input.protein_g ?? null,
+    input.fat_g ?? null,
+    input.carbs_g ?? null,
+    input.fiber_g ?? null,
+    input.source,
+    input.confidence ?? null,
+    input.notes ?? null,
+    input.raw_response ?? null,
+  );
+  return Number(info.lastInsertRowid);
+}
+
+export interface NutritionTarget {
+  daily_calories: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+}
+
+export function getTarget(): NutritionTarget {
+  return db().prepare(
+    "SELECT daily_calories, protein_g, fat_g, carbs_g FROM nutrition_targets WHERE id = 1"
+  ).get() as NutritionTarget;
+}
+
+export function setTarget(t: NutritionTarget): void {
+  db().prepare(`
+    UPDATE nutrition_targets
+       SET daily_calories = ?, protein_g = ?, fat_g = ?, carbs_g = ?, updated_at = ?
+     WHERE id = 1
+  `).run(t.daily_calories, t.protein_g, t.fat_g, t.carbs_g, new Date().toISOString());
+}
+
+export function getTodayTotal(): { calories: number; protein_g: number; fat_g: number; carbs_g: number; count: number } {
+  const row = db().prepare(`
+    SELECT
+      COALESCE(SUM(calories), 0) AS calories,
+      COALESCE(SUM(protein_g), 0) AS protein_g,
+      COALESCE(SUM(fat_g), 0)    AS fat_g,
+      COALESCE(SUM(carbs_g), 0)  AS carbs_g,
+      COUNT(*) AS count
+    FROM nutrition_logs
+    WHERE date(ts, 'localtime') = date('now', 'localtime')
+  `).get() as { calories: number; protein_g: number; fat_g: number; carbs_g: number; count: number };
+  return row;
+}
+
+export function listTodayMeals(): Array<{
+  id: number; ts: string; description: string | null;
+  calories: number | null; protein_g: number | null; fat_g: number | null; carbs_g: number | null;
+}> {
+  return db().prepare(`
+    SELECT id, ts, description, calories, protein_g, fat_g, carbs_g
+    FROM nutrition_logs
+    WHERE date(ts, 'localtime') = date('now', 'localtime')
+    ORDER BY ts
+  `).all() as any;
+}
+
+export function deleteNutritionLog(id: number): void {
+  db().prepare("DELETE FROM nutrition_logs WHERE id = ?").run(id);
+}

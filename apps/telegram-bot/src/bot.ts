@@ -1,10 +1,13 @@
 import { Telegraf, Markup } from "telegraf";
 import type { Context } from "telegraf";
+import { message } from "telegraf/filters";
 import { parseScheduleToCron } from "@health/shared";
 import {
   upsertUser, listActiveMeds, addMedication, deactivateMed,
   getMed, logIntake, logFeeling, listUsers,
+  getTarget, setTarget, getTodayTotal, listTodayMeals, deleteNutritionLog,
 } from "./db.js";
+import { processFoodPhoto } from "./nutrition.js";
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 if (!TOKEN) {
@@ -36,14 +39,19 @@ bot.start(async (ctx) => {
 // ============= /help =============
 bot.help(async (ctx) => {
   await ctx.reply(
-    `Команды:\n` +
-    `/feeling — записать самочувствие\n` +
-    `/meds — список лекарств\n` +
-    `/addmed Название | доза | расписание — добавить\n` +
-    `   пример: /addmed Витамин D | 5000 МЕ | утром\n` +
-    `/stopmed N — снять лекарство #N с приёма\n` +
-    `/whoami — мой chat_id (для дашборда)\n` +
-    `/help — это сообщение`
+    `Команды:\n\n` +
+    `🩺 Самочувствие\n` +
+    `/feeling — записать настроение и энергию\n\n` +
+    `💊 Лекарства\n` +
+    `/meds — список\n` +
+    `/addmed Название | доза | расписание (пример: Витамин D | 5000 МЕ | утром)\n` +
+    `/stopmed N — снять #N с приёма\n\n` +
+    `🍳 Питание\n` +
+    `📸 Просто пришли фото еды — посчитаю КБЖУ\n` +
+    `/today — итог за сегодня\n` +
+    `/target — посмотреть/изменить дневную норму\n\n` +
+    `⚙️ Прочее\n` +
+    `/whoami — мой chat_id`
   );
 });
 
@@ -299,6 +307,138 @@ export async function sendFeelingPrompt(chatId: number) {
 bot.action("open_feeling", async (ctx) => {
   await ctx.answerCbQuery();
   await askMood(ctx);
+});
+
+// ============= Nutrition: фото еды =============
+
+function fmtKbju(parsed: { calories: number | null; protein_g: number | null; fat_g: number | null; carbs_g: number | null }): string {
+  const num = (v: number | null, unit = "") => v === null ? "—" : `${Math.round(v)}${unit}`;
+  return `🔥 ${num(parsed.calories)} ккал\n💪 Б ${num(parsed.protein_g, "г")} · 🥑 Ж ${num(parsed.fat_g, "г")} · 🍞 У ${num(parsed.carbs_g, "г")}`;
+}
+
+bot.on(message("photo"), async (ctx) => {
+  upsertUser({ chat_id: ctx.chat.id, username: ctx.from?.username, first_name: ctx.from?.first_name });
+  const photos = ctx.message.photo;
+  if (!photos || photos.length === 0) return;
+  // Самый большой размер — последний
+  const fileId = photos[photos.length - 1]!.file_id;
+  const caption = "caption" in ctx.message && typeof ctx.message.caption === "string" ? ctx.message.caption : undefined;
+
+  const ack = await ctx.reply("🔍 Распознаю еду... 30-60 сек");
+
+  try {
+    const result = await processFoodPhoto(bot, fileId, ctx.chat.id, caption);
+    if ("error" in result) {
+      await ctx.telegram.editMessageText(ctx.chat.id, ack.message_id, undefined, `⚠️ ${result.error}`);
+      return;
+    }
+    const { logId, parsed } = result;
+    const conf = parsed.confidence === "high" ? "✓" : parsed.confidence === "medium" ? "~" : "?";
+    const msg =
+      `${conf} *${parsed.description}*\n\n` +
+      fmtKbju(parsed) +
+      `\n\n#${logId} · уверенность: ${parsed.confidence}`;
+    await ctx.telegram.editMessageText(ctx.chat.id, ack.message_id, undefined, msg, {
+      parse_mode: "Markdown",
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback("✓ Принять", `food_keep:${logId}`),
+          Markup.button.callback("🗑 Удалить", `food_drop:${logId}`),
+        ],
+      ]),
+    });
+  } catch (e) {
+    await ctx.telegram.editMessageText(ctx.chat.id, ack.message_id, undefined, `⚠️ Ошибка: ${(e as Error).message}`);
+  }
+});
+
+bot.action(/^food_keep:(\d+)$/, async (ctx) => {
+  await ctx.answerCbQuery("Записано");
+  // Просто убираем кнопки, текст оставляем
+  try {
+    await ctx.editMessageReplyMarkup(undefined);
+  } catch { /* ignore */ }
+});
+
+bot.action(/^food_drop:(\d+)$/, async (ctx) => {
+  const logId = Number(ctx.match[1]);
+  deleteNutritionLog(logId);
+  await ctx.answerCbQuery("Удалено");
+  try {
+    await ctx.editMessageText(`🗑 Запись #${logId} удалена.`);
+  } catch { /* ignore */ }
+});
+
+// ============= /today =============
+
+bot.command("today", async (ctx) => {
+  const total = getTodayTotal();
+  const target = getTarget();
+  const meals = listTodayMeals();
+
+  if (meals.length === 0) {
+    await ctx.reply("За сегодня записей нет. Пришли фото еды чтобы начать.");
+    return;
+  }
+
+  function pct(actual: number, goal: number): string {
+    const p = Math.round((actual / goal) * 100);
+    return `${p}%`;
+  }
+
+  function bar(actual: number, goal: number, width = 12): string {
+    const filled = Math.min(width, Math.round((actual / goal) * width));
+    return "█".repeat(filled) + "░".repeat(width - filled);
+  }
+
+  const lines = [
+    "📊 *Сегодня*",
+    "",
+    `🔥 *${Math.round(total.calories)}* / ${target.daily_calories} ккал · ${pct(total.calories, target.daily_calories)}`,
+    `${bar(total.calories, target.daily_calories)}`,
+    "",
+    `💪 Белки: *${Math.round(total.protein_g)}* / ${target.protein_g} г · ${pct(total.protein_g, target.protein_g)}`,
+    `🥑 Жиры: *${Math.round(total.fat_g)}* / ${target.fat_g} г · ${pct(total.fat_g, target.fat_g)}`,
+    `🍞 Угл.: *${Math.round(total.carbs_g)}* / ${target.carbs_g} г · ${pct(total.carbs_g, target.carbs_g)}`,
+    "",
+    `*Приёмы пищи (${meals.length}):*`,
+  ];
+
+  for (const m of meals) {
+    const t = new Date(m.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    const kcal = m.calories ? `${Math.round(m.calories)} ккал` : "—";
+    lines.push(`${t} — ${m.description ?? "?"} · ${kcal}`);
+  }
+
+  await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" });
+});
+
+// ============= /target =============
+
+bot.command("target", async (ctx) => {
+  const args = ctx.message.text.replace(/^\/target(@\w+)?\s*/, "").trim();
+  if (!args) {
+    const t = getTarget();
+    await ctx.reply(
+      `Дневная норма КБЖУ:\n\n` +
+      `🔥 ${t.daily_calories} ккал\n` +
+      `💪 Б ${t.protein_g} г\n` +
+      `🥑 Ж ${t.fat_g} г\n` +
+      `🍞 У ${t.carbs_g} г\n\n` +
+      `Изменить: \`/target 2400 130 80 300\` (ккал Б Ж У)`,
+      { parse_mode: "Markdown" }
+    );
+    return;
+  }
+
+  const parts = args.split(/\s+/).map(Number);
+  if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n) || n <= 0)) {
+    await ctx.reply("Формат: `/target ккал Б Ж У`\nПример: `/target 2400 130 80 300`", { parse_mode: "Markdown" });
+    return;
+  }
+  const [daily_calories, protein_g, fat_g, carbs_g] = parts as [number, number, number, number];
+  setTarget({ daily_calories, protein_g, fat_g, carbs_g });
+  await ctx.reply(`✓ Норма обновлена: ${daily_calories} ккал · Б${protein_g}/Ж${fat_g}/У${carbs_g}`);
 });
 
 // ============= Помощь по неизвестным =============

@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { Sidebar } from "@/components/Sidebar";
-import { countLabs } from "@/lib/queries";
+import { countLabs, countStudies } from "@/lib/queries";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -21,11 +21,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     labsCount = undefined;
   }
 
+  let studiesCount: number | undefined;
+  try { studiesCount = countStudies(); } catch { studiesCount = undefined; }
+
   return (
     <html lang="ru" className={inter.variable}>
       <body className="font-sans bg-bg-page text-text-strong min-h-screen">
         <div className="flex">
-          <Sidebar archiveCount={labsCount} />
+          <Sidebar archiveCount={labsCount} studiesCount={studiesCount} />
           <main className="flex-1 px-9 py-7 max-w-[1200px]">{children}</main>
         </div>
       </body>

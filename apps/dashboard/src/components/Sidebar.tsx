@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Archive, Upload, Pill, Activity, Watch,
-  ListPlus, Apple, Dumbbell, Settings,
+  ListPlus, Apple, Dumbbell, Settings, Stethoscope,
 } from "lucide-react";
 
 interface NavItem {
@@ -26,6 +26,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "/", label: "Главная", icon: <LayoutDashboard size={16} /> },
       { href: "/archive", label: "Архив сдач", icon: <Archive size={16} /> },
+      { href: "/studies", label: "Исследования", icon: <Stethoscope size={16} /> },
     ],
   },
   {
@@ -50,9 +51,10 @@ const GROUPS: NavGroup[] = [
 
 interface SidebarProps {
   archiveCount?: number;
+  studiesCount?: number;
 }
 
-export function Sidebar({ archiveCount }: SidebarProps) {
+export function Sidebar({ archiveCount, studiesCount }: SidebarProps) {
   const pathname = usePathname();
   return (
     <aside className="w-[220px] bg-bg-sidebar border-r border-border-soft p-6 flex flex-col min-h-screen">
@@ -73,9 +75,10 @@ export function Sidebar({ archiveCount }: SidebarProps) {
           </div>
           {group.items.map((item) => {
             const active = !item.soon && pathname === item.href;
-            const itemBadge = item.label === "Архив сдач" && typeof archiveCount === "number"
-              ? archiveCount
-              : item.badge;
+            const itemBadge =
+              item.label === "Архив сдач" && typeof archiveCount === "number" ? archiveCount :
+              item.label === "Исследования" && typeof studiesCount === "number" ? studiesCount :
+              item.badge;
             return (
               <Link
                 key={item.label}

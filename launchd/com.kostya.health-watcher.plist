@@ -14,11 +14,11 @@
   <dict>
     <key>HEALTH_VAULT_PATH</key><string>/Users/konstantin/Documents/AI/health</string>
     <key>CLAUDE_BIN</key><string>/Users/konstantin/.local/bin/claude</string>
-    <key>PATH</key><string>/Users/konstantin/Library/pnpm:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PATH</key><string>/Users/konstantin/Library/pnpm:/Users/konstantin/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
-  <key>RunAtLoad</key><true/>
+  <key>RunAtLoad</key><false/>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>/Users/konstantin/Documents/AI/health/.import.log</string>
-  <key>StandardErrorPath</key><string>/Users/konstantin/Documents/AI/health/.import.log</string>
+  <key>StandardOutPath</key><string>/Users/konstantin/Library/Logs/health/import.log</string>
+  <key>StandardErrorPath</key><string>/Users/konstantin/Library/Logs/health/import.log</string>
 </dict>
 </plist>

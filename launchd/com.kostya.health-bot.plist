@@ -19,7 +19,7 @@
     <key>HEALTH_VAULT_PATH</key>
     <string>/Users/konstantin/Documents/AI/health</string>
     <key>TELEGRAM_BOT_TOKEN</key>
-    <string>8851934442:AAFiXAmylkeLnmPa-jZutx93BlW87LATxbw</string>
+    <string>REPLACE_WITH_TOKEN_FROM_BOTFATHER</string>
     <key>CLAUDE_BIN</key>
     <string>/Users/konstantin/.local/bin/claude</string>
     <key>PATH</key>

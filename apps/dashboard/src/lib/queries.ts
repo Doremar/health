@@ -488,3 +488,87 @@ export function getWhoopSummary(): {
     hrvAvg7d: hrv?.avg ?? null,
   };
 }
+
+// ============= Studies =============
+
+export interface StudyRow {
+  id: number;
+  date: string;
+  type: string;
+  modality: string | null;
+  organ: string | null;
+  facility: string | null;
+  doctor: string | null;
+  conclusion: string | null;
+  source_file: string;
+  needs_review: 0 | 1;
+}
+
+export interface StudyDiagnosis { id: number; text: string; icd10: string | null }
+export interface StudyMetric {
+  id: number; code: string; name: string;
+  value: number | null; unit: string | null;
+  ref_low: number | null; ref_high: number | null; flag: string | null;
+}
+export interface StudyDetail extends StudyRow {
+  findings: string | null;
+  recommendations: string | null;
+  diagnoses: StudyDiagnosis[];
+  metrics: StudyMetric[];
+}
+
+export function countStudies(): number {
+  return (db().prepare("SELECT COUNT(*) AS n FROM studies").get() as { n: number }).n;
+}
+
+export function listAllStudies(): StudyRow[] {
+  return db().prepare(
+    `SELECT id, date, type, modality, organ, facility, doctor, conclusion, source_file, needs_review
+     FROM studies ORDER BY date DESC`
+  ).all() as StudyRow[];
+}
+
+export function searchStudies(q: string, type: string, modality: string): StudyRow[] {
+  const term = q.trim().toLowerCase();
+  const sql = `
+    SELECT DISTINCT s.id, s.date, s.type, s.modality, s.organ, s.facility,
+                    s.doctor, s.conclusion, s.source_file, s.needs_review
+    FROM studies s
+    WHERE
+      ( @term = ''
+        OR LOWER(COALESCE(s.organ, '')) LIKE '%' || @term || '%'
+        OR LOWER(COALESCE(s.facility, '')) LIKE '%' || @term || '%'
+        OR LOWER(COALESCE(s.conclusion, '')) LIKE '%' || @term || '%'
+        OR LOWER(COALESCE(s.findings, '')) LIKE '%' || @term || '%'
+        OR EXISTS (
+          SELECT 1 FROM study_diagnoses d
+          WHERE d.study_id = s.id AND LOWER(d.text) LIKE '%' || @term || '%'
+        )
+      )
+      AND ( @type = '' OR s.type = @type )
+      AND ( @modality = '' OR s.modality = @modality )
+    ORDER BY s.date DESC
+  `;
+  return db().prepare(sql).all({ term, type: type.trim(), modality: modality.trim() }) as StudyRow[];
+}
+
+export function getStudy(id: number): StudyDetail | null {
+  const study = db().prepare(
+    `SELECT id, date, type, modality, organ, facility, doctor,
+            conclusion, findings, recommendations, source_file, needs_review
+     FROM studies WHERE id = ?`
+  ).get(id) as Omit<StudyDetail, "diagnoses" | "metrics"> | null;
+  if (!study) return null;
+  const diagnoses = db().prepare(
+    `SELECT id, text, icd10 FROM study_diagnoses WHERE study_id = ? ORDER BY id`
+  ).all(id) as StudyDiagnosis[];
+  const metrics = db().prepare(
+    `SELECT id, code, name, value, unit, ref_low, ref_high, flag
+     FROM study_metrics WHERE study_id = ? ORDER BY id`
+  ).all(id) as StudyMetric[];
+  return { ...study, diagnoses, metrics };
+}
+
+export function deleteStudy(id: number): void {
+  db().prepare("DELETE FROM studies WHERE id = ?").run(id);
+}

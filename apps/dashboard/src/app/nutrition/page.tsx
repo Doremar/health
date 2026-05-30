@@ -3,6 +3,7 @@ import {
 } from "@/lib/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionHeader } from "@/components/SectionHeader";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { Apple } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -110,11 +111,11 @@ export default function NutritionPage() {
                   <td className="p-3 text-right tabular text-text-muted">{m.carbs_g ? Math.round(m.carbs_g) : "—"}</td>
                   <td className="p-3 text-center text-xs text-text-faint">{m.confidence ?? "—"}</td>
                   <td className="p-3 text-right">
-                    <form action="/api/nutrition" method="POST" className="inline">
-                      <input type="hidden" name="action" value="delete" />
-                      <input type="hidden" name="id" value={m.id} />
-                      <button type="submit" className="text-text-faint hover:text-flag-critical text-xs">×</button>
-                    </form>
+                    <ConfirmDeleteButton
+                      endpoint="/api/nutrition"
+                      fields={{ action: "delete", id: m.id }}
+                      confirmText={`Удалить «${m.description ?? "запись"}»? Восстановить нельзя.`}
+                    />
                   </td>
                 </tr>
               ))}

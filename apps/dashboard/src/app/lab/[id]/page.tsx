@@ -2,6 +2,7 @@ import { getLab, listLabMarkers } from "@/lib/queries";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { FlagPill } from "@/components/FlagPill";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import Link from "next/link";
 import type { Flag } from "@health/shared";
 
@@ -71,12 +72,13 @@ export default async function LabPage({ params }: { params: Promise<{ id: string
         >
           Открыть PDF
         </a>
-        <form action="/api/delete-lab" method="POST">
-          <input type="hidden" name="id" value={lab.id} />
-          <button type="submit" className="text-flag-critical hover:underline">
-            Удалить сдачу
-          </button>
-        </form>
+        <ConfirmDeleteButton
+          endpoint="/api/delete-lab"
+          fields={{ id: lab.id }}
+          confirmText={`Удалить эту сдачу (${lab.lab_name}${lab.panel ? " · " + lab.panel : ""} от ${lab.date})? Все маркеры тоже пропадут.`}
+          label="Удалить сдачу"
+          className="text-flag-critical hover:underline"
+        />
       </div>
     </>
   );

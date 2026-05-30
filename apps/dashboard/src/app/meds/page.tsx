@@ -1,6 +1,7 @@
 import { listMeds, listRecentIntakes, getIntakeStats } from "@/lib/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionHeader } from "@/components/SectionHeader";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { Pill } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -91,11 +92,15 @@ export default function MedsPage() {
                     <div className="font-medium text-text-primary">{m.name}</div>
                     {m.dose && <div className="text-xs text-text-faint mt-0.5">{m.dose}</div>}
                   </div>
-                  <form action="/api/med" method="POST" className="shrink-0">
-                    <input type="hidden" name="action" value="deactivate" />
-                    <input type="hidden" name="id" value={m.id} />
-                    <button type="submit" className="text-text-faint hover:text-flag-critical text-xs">снять</button>
-                  </form>
+                  <div className="shrink-0">
+                    <ConfirmDeleteButton
+                      endpoint="/api/med"
+                      fields={{ action: "deactivate", id: m.id }}
+                      confirmText={`Снять «${m.name}» с приёма? Напоминания прекратятся, история останется.`}
+                      label="снять"
+                      className="text-text-faint hover:text-flag-critical text-xs"
+                    />
+                  </div>
                 </div>
                 {m.schedule_hint && (
                   <div className="mt-3 text-xs text-text-subtle">

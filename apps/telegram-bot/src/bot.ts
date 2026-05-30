@@ -360,7 +360,26 @@ bot.action(/^food_keep:(\d+)$/, async (ctx) => {
   } catch { /* ignore */ }
 });
 
+// Первый клик — показать confirm
 bot.action(/^food_drop:(\d+)$/, async (ctx) => {
+  const logId = Number(ctx.match[1]);
+  await ctx.answerCbQuery();
+  try {
+    await ctx.editMessageReplyMarkup({
+      inline_keyboard: [
+        [
+          Markup.button.callback("⚠ Точно удалить?", "noop"),
+        ],
+        [
+          Markup.button.callback("Да, удалить", `food_drop_yes:${logId}`),
+          Markup.button.callback("Отмена", `food_drop_no:${logId}`),
+        ],
+      ],
+    });
+  } catch { /* ignore */ }
+});
+
+bot.action(/^food_drop_yes:(\d+)$/, async (ctx) => {
   const logId = Number(ctx.match[1]);
   deleteNutritionLog(logId);
   await ctx.answerCbQuery("Удалено");
@@ -368,6 +387,22 @@ bot.action(/^food_drop:(\d+)$/, async (ctx) => {
     await ctx.editMessageText(`🗑 Запись #${logId} удалена.`);
   } catch { /* ignore */ }
 });
+
+bot.action(/^food_drop_no:(\d+)$/, async (ctx) => {
+  const logId = Number(ctx.match[1]);
+  await ctx.answerCbQuery("Отменено");
+  // Вернуть исходные кнопки
+  try {
+    await ctx.editMessageReplyMarkup({
+      inline_keyboard: [[
+        Markup.button.callback("✓ Принять", `food_keep:${logId}`),
+        Markup.button.callback("🗑 Удалить", `food_drop:${logId}`),
+      ]],
+    });
+  } catch { /* ignore */ }
+});
+
+bot.action("noop", async (ctx) => { await ctx.answerCbQuery(); });
 
 // ============= /today =============
 

@@ -1,60 +1,40 @@
 # health
 
-Хранилище медицинских анализов + дэшборд. См. спеку:
-`/Users/konstantin/Documents/AI/docs/superpowers/specs/2026-05-29-health-labs-storage-design.md`
+Хранилище медицинских анализов + дэшборд + Telegram-бот + парсинг исследований (ЭКГ/КТ/МРТ/УЗИ/...).
 
 ## Установка
 
 ```bash
-cp .env.example .env  # подредактируй пути
+cp .env.example .env  # подредактируй HEALTH_VAULT_PATH, TELEGRAM_BOT_TOKEN
 pnpm install
 pnpm migrate
 ```
 
 ## Запуск
 
-- Importer: `pnpm --filter importer watch`
-- Dashboard: `pnpm --filter dashboard dev`
+Один процесс на всё — `concurrently` поднимает watcher, dashboard и бота:
 
-## Развёртывание на Mac mini
+```bash
+pnpm dev
+```
 
-### Предусловия
+Отдельно:
+```bash
+pnpm --filter @health/importer    watch    # watcher на inbox
+pnpm --filter @health/dashboard   dev      # http://localhost:3000
+pnpm --filter @health/telegram-bot dev     # Telegram-бот
+```
+
+## Требования
+
 - Node.js 22+
-- pnpm 9+ (на этой машине: `/Users/konstantin/Library/pnpm/pnpm`)
-- Claude Code залогинен (`claude` отвечает в терминале) — используется importer через `claude -p`
-- Tailscale настроен (для доступа снаружи)
+- pnpm 9+
+- Claude Code CLI залогинен (`claude` отвечает в терминале) — importer и бот используют `claude -p` для парсинга PDF и фото
 
-### Сборка
-```bash
-cd ~/projects/health
-pnpm install
-pnpm migrate
-pnpm --filter @health/dashboard build
-```
+## Доступ снаружи
 
-Importer и watcher запускаются через `tsx` — отдельная сборка не нужна.
-
-### Установка сервисов
-```bash
-cp launchd/com.kostya.health-watcher.plist   ~/Library/LaunchAgents/
-cp launchd/com.kostya.health-dashboard.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.kostya.health-watcher.plist
-launchctl load ~/Library/LaunchAgents/com.kostya.health-dashboard.plist
-```
-
-### Проверка
-```bash
-curl -s http://localhost:3000 | head -20
-tail -20 /Users/konstantin/Documents/AI/health/.import.log
-tail -20 /Users/konstantin/Documents/AI/health/.dashboard.log
-```
-
-### Доступ снаружи
 Mac mini добавлен в Tailnet. Открывать `http://<mac-mini-name>:3000` с любого устройства в Tailnet.
 
-### Управление сервисами
-```bash
-launchctl unload ~/Library/LaunchAgents/com.kostya.health-watcher.plist
-launchctl unload ~/Library/LaunchAgents/com.kostya.health-dashboard.plist
-# затем launchctl load снова после изменений
-```
+## Логи
+
+`pnpm dev` пишет всё в один stdout. Для отдельных запусков — стандартный stdout/stderr процесса.

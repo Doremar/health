@@ -240,3 +240,117 @@ export function getIntakeStats(medId: number): { taken: number; skipped: number;
     snooze: row.snooze ?? 0,
   };
 }
+
+// ============= Whoop =============
+
+export interface WhoopRecoveryRow {
+  whoop_cycle_id: number;
+  created_at: string;
+  recovery_score: number | null;
+  resting_hr: number | null;
+  hrv_rmssd_ms: number | null;
+}
+
+export interface WhoopCycleRow {
+  whoop_id: number;
+  start_ts: string;
+  end_ts: string | null;
+  strain: number | null;
+  kilojoules: number | null;
+  average_hr: number | null;
+  max_hr: number | null;
+}
+
+export interface WhoopSleepRow {
+  whoop_id: number;
+  start_ts: string;
+  end_ts: string | null;
+  nap: 0 | 1;
+  total_in_bed_ms: number | null;
+  total_awake_ms: number | null;
+  total_rem_sleep_ms: number | null;
+  total_slow_wave_sleep_ms: number | null;
+  total_light_sleep_ms: number | null;
+  sleep_efficiency_pct: number | null;
+  sleep_performance_pct: number | null;
+  disturbances: number | null;
+  respiratory_rate: number | null;
+}
+
+export interface WhoopWorkoutRow {
+  whoop_id: number;
+  start_ts: string;
+  end_ts: string | null;
+  sport_name: string | null;
+  strain: number | null;
+  average_hr: number | null;
+  max_hr: number | null;
+  kilojoules: number | null;
+  distance_meter: number | null;
+}
+
+export function isWhoopConnected(): boolean {
+  try {
+    const row = db().prepare("SELECT 1 AS x FROM whoop_auth WHERE id = 1").get();
+    return !!row;
+  } catch {
+    return false;
+  }
+}
+
+export function listRecentRecovery(limit = 30): WhoopRecoveryRow[] {
+  return db().prepare(
+    "SELECT whoop_cycle_id, created_at, recovery_score, resting_hr, hrv_rmssd_ms FROM whoop_recovery ORDER BY created_at DESC LIMIT ?"
+  ).all(limit) as WhoopRecoveryRow[];
+}
+
+export function listRecentCycles(limit = 30): WhoopCycleRow[] {
+  return db().prepare(
+    "SELECT whoop_id, start_ts, end_ts, strain, kilojoules, average_hr, max_hr FROM whoop_cycles ORDER BY start_ts DESC LIMIT ?"
+  ).all(limit) as WhoopCycleRow[];
+}
+
+export function listRecentSleeps(limit = 30): WhoopSleepRow[] {
+  return db().prepare(
+    `SELECT whoop_id, start_ts, end_ts, nap,
+            total_in_bed_ms, total_awake_ms, total_rem_sleep_ms,
+            total_slow_wave_sleep_ms, total_light_sleep_ms,
+            sleep_efficiency_pct, sleep_performance_pct, disturbances, respiratory_rate
+     FROM whoop_sleeps ORDER BY start_ts DESC LIMIT ?`
+  ).all(limit) as WhoopSleepRow[];
+}
+
+export function listRecentWorkouts(limit = 30): WhoopWorkoutRow[] {
+  return db().prepare(
+    `SELECT whoop_id, start_ts, end_ts, sport_name, strain,
+            average_hr, max_hr, kilojoules, distance_meter
+     FROM whoop_workouts ORDER BY start_ts DESC LIMIT ?`
+  ).all(limit) as WhoopWorkoutRow[];
+}
+
+export function getWhoopSummary(): {
+  latestRecovery: number | null;
+  latestStrain: number | null;
+  latestSleepDurationMs: number | null;
+  hrvAvg7d: number | null;
+} {
+  const latestRec = db().prepare("SELECT recovery_score FROM whoop_recovery ORDER BY created_at DESC LIMIT 1")
+    .get() as { recovery_score: number | null } | undefined;
+  const latestCyc = db().prepare("SELECT strain FROM whoop_cycles ORDER BY start_ts DESC LIMIT 1")
+    .get() as { strain: number | null } | undefined;
+  const latestSleep = db().prepare(`
+    SELECT (COALESCE(total_in_bed_ms,0) - COALESCE(total_awake_ms,0)) AS dur
+    FROM whoop_sleeps WHERE nap = 0 ORDER BY start_ts DESC LIMIT 1
+  `).get() as { dur: number | null } | undefined;
+  const hrv = db().prepare(`
+    SELECT AVG(hrv_rmssd_ms) AS avg
+    FROM whoop_recovery
+    WHERE created_at >= datetime('now', '-7 days') AND hrv_rmssd_ms IS NOT NULL
+  `).get() as { avg: number | null } | undefined;
+  return {
+    latestRecovery: latestRec?.recovery_score ?? null,
+    latestStrain: latestCyc?.strain ?? null,
+    latestSleepDurationMs: latestSleep?.dur ?? null,
+    hrvAvg7d: hrv?.avg ?? null,
+  };
+}

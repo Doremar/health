@@ -34,13 +34,13 @@ const GROUPS: NavGroup[] = [
       { href: "/import", label: "Загрузить", icon: <Upload size={16} /> },
       { href: "/meds", label: "Лекарства и БАД", icon: <Pill size={16} /> },
       { href: "/feelings", label: "Самочувствие", icon: <Activity size={16} /> },
+      { href: "/whoop", label: "Whoop", icon: <Watch size={16} /> },
     ],
   },
   {
     title: "Дневники",
     hint: "скоро",
     items: [
-      { href: "#", label: "Whoop",        icon: <Watch size={16} />,    badge: "soon", soon: true },
       { href: "#", label: "Симптомы",     icon: <ListPlus size={16} />, badge: "soon", soon: true },
       { href: "#", label: "Питание",      icon: <Apple size={16} />,    badge: "soon", soon: true },
       { href: "#", label: "Тренировки",   icon: <Dumbbell size={16} />, badge: "soon", soon: true },

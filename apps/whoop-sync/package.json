@@ -1,0 +1,26 @@
+{
+  "name": "@health/whoop-sync",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "whoop": "src/index.ts"
+  },
+  "scripts": {
+    "cli": "tsx src/index.ts",
+    "auth": "tsx src/index.ts auth",
+    "sync": "tsx src/index.ts sync"
+  },
+  "dependencies": {
+    "@health/shared": "workspace:*",
+    "better-sqlite3": "^11.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

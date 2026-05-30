@@ -16,7 +16,19 @@ function clearAllMedJobs(): void {
   medJobs.length = 0;
 }
 
+function currentSignature(): string {
+  // Сигнатура текущих активных лекарств — если изменилась, нужно reschedule
+  const meds = listActiveMeds();
+  return meds.map((m) => `${m.id}:${m.schedule_cron ?? "—"}`).join("|");
+}
+
+let lastSignature = "";
+
 export function rescheduleAll(): void {
+  const sig = currentSignature();
+  if (sig === lastSignature && medJobs.length > 0) return;  // ничего не изменилось
+  lastSignature = sig;
+
   clearAllMedJobs();
 
   const meds = listActiveMeds();
@@ -36,8 +48,17 @@ export function rescheduleAll(): void {
     medJobs.push({ task, medId: med.id, cronExpr: med.schedule_cron });
   }
 
-  console.log(`[scheduler] meds: ${medJobs.length} jobs active`);
+  console.log(`[scheduler] meds: ${medJobs.length} jobs active (${sig || "empty"})`);
 }
+
+// Поллим БД каждые 30 секунд — подхватываем изменения извне (web UI, прямые SQL inserts)
+setInterval(() => {
+  try {
+    rescheduleAll();
+  } catch (e) {
+    console.error("[scheduler] reschedule failed:", (e as Error).message);
+  }
+}, 30_000);
 
 export function startFeelingSurveys(): void {
   // Старые опросы — снять

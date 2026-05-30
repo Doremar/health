@@ -1,4 +1,4 @@
-import { listAllLabs } from "@/lib/queries";
+import { searchLabs, listAllLabs } from "@/lib/queries";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 
@@ -6,13 +6,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ArchivePage({ searchParams }: { searchParams: Promise<{ q?: string; lab?: string }> }) {
   const sp = await searchParams;
-  const q = (sp.q ?? "").toLowerCase().trim();
+  const q = (sp.q ?? "").trim();
   const labFilter = (sp.lab ?? "").trim();
 
   const all = listAllLabs();
-  let labs = all;
-  if (q) labs = labs.filter((l) => (l.lab_name + " " + (l.panel ?? "")).toLowerCase().includes(q));
-  if (labFilter) labs = labs.filter((l) => l.lab_name === labFilter);
+  const labs = searchLabs(q, labFilter);
 
   const knownLabs = Array.from(new Set(all.map((l) => l.lab_name))).sort();
 
@@ -21,13 +19,13 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
       <PageHeader title="Архив" meta={`${labs.length} из ${all.length} сдач`} />
 
       <form className="flex gap-3 items-end mb-6">
-        <div>
+        <div className="flex-1 max-w-md">
           <label className="block text-[11px] uppercase tracking-wider text-text-faint mb-1">Поиск</label>
           <input
             name="q"
             defaultValue={sp.q ?? ""}
-            className="bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
-            placeholder="по лаборатории или панели"
+            className="w-full bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
+            placeholder="лаборатория, панель или маркер (холестерин, ferritin, моча...)"
           />
         </div>
         <div>
@@ -51,17 +49,31 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
               <th className="p-3 text-left font-medium">Дата</th>
               <th className="p-3 text-left font-medium">Лаборатория</th>
               <th className="p-3 text-left font-medium">Панель</th>
+              <th className="p-3 text-left font-medium">Совпадения</th>
               <th className="p-3"></th>
             </tr>
           </thead>
           <tbody>
             {labs.map((l) => (
               <tr key={l.id} className="border-t border-border-soft hover:bg-bg-elevated/40 transition-colors">
-                <td className="p-3 text-text-primary tabular">{l.date}</td>
-                <td className="p-3 text-text-muted">{l.lab_name}</td>
-                <td className="p-3 text-text-muted">{l.panel ?? "—"}</td>
-                <td className="p-3">
-                  <Link href={`/lab/${l.id}`} className="text-flag-low hover:underline text-xs">открыть →</Link>
+                <td className="p-3 text-text-primary tabular align-top">{l.date}</td>
+                <td className="p-3 text-text-muted align-top">{l.lab_name}</td>
+                <td className="p-3 text-text-muted align-top">{l.panel ?? "—"}</td>
+                <td className="p-3 align-top">
+                  {l.matched_markers.length === 0 ? (
+                    <span className="text-text-disabled">—</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {l.matched_markers.map((m) => (
+                        <span key={m} className="text-[11px] bg-flag-low/10 text-flag-low px-2 py-0.5 rounded">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </td>
+                <td className="p-3 align-top">
+                  <Link href={`/lab/${l.id}`} className="text-flag-low hover:underline text-xs whitespace-nowrap">открыть →</Link>
                 </td>
               </tr>
             ))}

@@ -79,6 +79,50 @@ export function listAllLabs(): LabHeader[] {
   return db().prepare("SELECT id, date, lab_name, panel, source_file, needs_review FROM labs ORDER BY date DESC").all() as LabHeader[];
 }
 
+export interface LabWithMatches extends LabHeader {
+  matched_markers: string[];
+}
+
+/**
+ * Поиск по архиву: lab_name + panel + ИМЕНА/КОДЫ МАРКЕРОВ внутри сдач.
+ * Если q пустое — отдаёт все. Если labFilter — фильтрует по лаборатории.
+ * Для совпадающих сдач возвращает до 5 названий маркеров что попали в q.
+ */
+export function searchLabs(q: string, labFilter: string): LabWithMatches[] {
+  const term = q.trim().toLowerCase();
+  const lab = labFilter.trim();
+  const sql = `
+    SELECT DISTINCT l.id, l.date, l.lab_name, l.panel, l.source_file, l.needs_review
+    FROM labs l
+    WHERE
+      (
+        @term = ''
+        OR LOWER(l.lab_name) LIKE '%' || @term || '%'
+        OR LOWER(COALESCE(l.panel, '')) LIKE '%' || @term || '%'
+        OR EXISTS (
+          SELECT 1 FROM markers m
+          WHERE m.lab_id = l.id
+            AND (LOWER(m.name) LIKE '%' || @term || '%' OR LOWER(m.code) LIKE '%' || @term || '%')
+        )
+      )
+      AND (@lab = '' OR l.lab_name = @lab)
+    ORDER BY l.date DESC
+  `;
+  const rows = db().prepare(sql).all({ term, lab }) as LabHeader[];
+  if (!term) return rows.map((r) => ({ ...r, matched_markers: [] }));
+
+  const markerStmt = db().prepare(`
+    SELECT DISTINCT name FROM markers
+    WHERE lab_id = @id
+      AND (LOWER(name) LIKE '%' || @term || '%' OR LOWER(code) LIKE '%' || @term || '%')
+    ORDER BY name LIMIT 5
+  `);
+  return rows.map((r) => {
+    const matched = (markerStmt.all({ id: r.id, term }) as { name: string }[]).map((x) => x.name);
+    return { ...r, matched_markers: matched };
+  });
+}
+
 export function deleteLab(id: number): void {
   db().prepare("DELETE FROM labs WHERE id = ?").run(id);
 }

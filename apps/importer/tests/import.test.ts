@@ -26,11 +26,16 @@ function freshDb(): Database.Database {
   if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
   const db = new Database(dbPath);
   db.pragma("foreign_keys = ON");
-  const schema = fs.readFileSync(
-    path.resolve(__dirname, "../../../migrations/001_init.sql"), "utf8",
-  );
-  db.exec(schema);
+  for (const f of ["001_init.sql", "007_studies.sql"]) {
+    db.exec(fs.readFileSync(path.resolve(__dirname, "../../../migrations/" + f), "utf8"));
+  }
   return db;
+}
+
+function triageLab() {
+  return vi.fn().mockResolvedValue(
+    JSON.stringify({ kind: "lab", confidence: "high" })
+  );
 }
 
 describe("importFile", () => {
@@ -39,7 +44,10 @@ describe("importFile", () => {
     db = freshDb();
     for (const d of ["inbox", "originals", "labs", "quarantine"]) {
       const p = path.join(TMP_VAULT, d);
-      for (const f of fs.readdirSync(p)) fs.unlinkSync(path.join(p, f));
+      for (const f of fs.readdirSync(p)) {
+        const full = path.join(p, f);
+        if (fs.statSync(full).isFile()) fs.unlinkSync(full);
+      }
     }
   });
   afterEach(() => db.close());
@@ -54,8 +62,9 @@ describe("importFile", () => {
       is_lab_result: true, confidence: "high",
     }));
 
-    const result = await importFile(db, inbox, { claudeRunner });
+    const result = await importFile(db, inbox, { claudeRunner, triageRunner: triageLab() });
     expect(result.status).toBe("imported");
+    expect(result.kind).toBe("lab");
 
     expect(fs.existsSync(inbox)).toBe(false);
     const originals = fs.readdirSync(path.join(TMP_VAULT, "originals"));
@@ -73,11 +82,11 @@ describe("importFile", () => {
       date: "2026-03-15", lab_name: "Invitro", panel: null,
       markers: [], is_lab_result: true, confidence: "high",
     }));
-    await importFile(db, inbox, { claudeRunner });
+    await importFile(db, inbox, { claudeRunner, triageRunner: triageLab() });
 
     const inbox2 = path.join(TMP_VAULT, "inbox", "test2.pdf");
     fs.writeFileSync(inbox2, "fake pdf content");
-    const result = await importFile(db, inbox2, { claudeRunner });
+    const result = await importFile(db, inbox2, { claudeRunner, triageRunner: triageLab() });
     expect(result.status).toBe("duplicate");
     expect(claudeRunner).toHaveBeenCalledTimes(1);
   });
@@ -89,7 +98,7 @@ describe("importFile", () => {
       date: "2026-03-15", lab_name: "n/a", panel: null,
       markers: [], is_lab_result: false, confidence: "high",
     }));
-    const result = await importFile(db, inbox, { claudeRunner });
+    const result = await importFile(db, inbox, { claudeRunner, triageRunner: triageLab() });
     expect(result.status).toBe("quarantined");
     const q = fs.readdirSync(path.join(TMP_VAULT, "quarantine"));
     expect(q).toHaveLength(1);
@@ -99,7 +108,7 @@ describe("importFile", () => {
     const inbox = path.join(TMP_VAULT, "inbox", "test.pdf");
     fs.writeFileSync(inbox, "fake pdf content");
     const claudeRunner = vi.fn().mockResolvedValue("garbage");
-    const result = await importFile(db, inbox, { claudeRunner });
+    const result = await importFile(db, inbox, { claudeRunner, triageRunner: triageLab() });
     expect(result.status).toBe("quarantined");
     expect(claudeRunner).toHaveBeenCalledTimes(3);
   });

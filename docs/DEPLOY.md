@@ -1,102 +1,100 @@
 # Deployment Plan — health project
 
-Документ для нового агента/человека, который продолжит развёртывание health-проекта на публичный домен.
+Документ для агента/инженера, который продолжит развёртывание health-проекта на публичный домен.
 
 ---
 
 ## Цель
 
-Сейчас весь проект (dashboard, telegram-бот, importer/watcher) живёт **локально на Mac mini в Дубае**. Доступ — только через Tailnet (`http://<mac-mini>:3000`).
+Сейчас весь проект (dashboard, telegram-бот, importer/watcher) живёт **локально на домашней машине (Mac mini)**. Доступ — только через Tailnet.
 
-**Хотим:** публичный домен (через reg.ru), HTTPS, чтобы открывалось `https://health.<домен>` из любой точки. При этом **парсинг PDF/фото остаётся на Mac mini** (через `claude -p`, подписка Claude Pro/Max — никаких API-ключей).
+**Хотим:** публичный домен с HTTPS, чтобы дашборд открывался из любой точки. При этом **парсинг PDF/фото остаётся локально на домашней машине** (через `claude -p`, по подписке Claude Pro/Max — без API-ключей).
 
 ---
 
-## Архитектура (выбранный вариант: Reverse Proxy)
+## Архитектура (Reverse Proxy)
 
 ```
 Internet
   │
   ▼
-https://health.<домен>            (DNS A-запись в reg.ru → IP droplet)
+https://<домен>                   (DNS A-запись → IP сервера)
   │
   ▼
-Digital Ocean Droplet (Ubuntu 24.04, $4/мес)
-  ├── Caddy (HTTPS через Let's Encrypt, автоматом)
-  └── Tailscale (в том же Tailnet что и Mac mini)
+VPS на Digital Ocean (Ubuntu LTS, ~$4/мес)
+  ├── Caddy        — HTTPS через Let's Encrypt, автоматом
+  └── Tailscale    — в том же Tailnet, что и домашняя машина
         │
-        ▼
-        reverse_proxy через Tailnet IP
+        ▼  reverse_proxy через Tailnet
         │
-        ▼
-Mac mini Дубай
-  ├── Dashboard (Next.js, http://localhost:3000)
-  ├── Telegram-бот @codebrotebot
+Домашняя машина (Mac mini)
+  ├── Dashboard (Next.js, localhost:3000)
+  ├── Telegram-бот
   ├── Importer + watcher (PDF/фото → claude -p → SQLite)
-  ├── Whoop-sync (когда подключим)
-  └── SQLite БД, vault, всё хранилище
+  ├── Whoop-sync (после подключения)
+  └── SQLite БД и vault — всё хранилище
 ```
 
 **Почему так:**
-- Mac mini уже работает 24/7 в Tailnet, контент на месте — ломать незачем.
-- DO droplet — только "витрина" с публичным IP и HTTPS. Никакой бизнес-логики там нет.
-- Если Mac mini временно офлайн — сайт показывает 502, но это редкий кейс.
-- Дешёво ($4/мес) и просто (~30 минут настройки).
+- Домашняя машина уже работает 24/7 в Tailnet, контент на месте — переносить незачем.
+- VPS — только "витрина" с публичным IP и HTTPS. Никакой бизнес-логики там нет.
+- Если домашняя машина временно офлайн — сайт показывает 502, редкий кейс.
+- Дёшево и просто (~30 минут настройки).
 
-**Альтернатива (отложена):** Litestream-репликация SQLite на сервер + dashboard на сервере. Делать если Mac mini станет ненадёжным.
+**Альтернатива (отложена):** Litestream-репликация SQLite на сервер + dashboard физически на сервере. Делать только если домашняя машина станет ненадёжной.
 
 ---
 
 ## Что готово
 
-- **Код:** https://github.com/Doremar/health (private repo, push доступен).
-- **Сервисы локально на Mac mini:** запускаются через `pnpm dev` в `~/projects/health`. Concurrently поднимает watcher + dashboard + bot. Раньше был launchd — удалён, потому что macOS TCC блокировал launchd на запись в `~/Documents/` (см. историю коммитов).
-- **Подписка Claude Pro/Max** активна на Mac mini, `claude -p` работает.
-- **Telegram-бот** активен, @codebrotebot.
-- **Tailnet:** Mac mini уже в нём. Имя ноды — узнать через `tailscale status` на Mac mini.
+- Код в репозитории на GitHub (приватный).
+- Сервисы запускаются локально через `pnpm dev` в корне проекта (concurrently поднимает watcher + dashboard + bot).
+- Подписка Claude Pro/Max активна на домашней машине, `claude -p` работает.
+- Telegram-бот активен, токен в локальном `.env` (не в репо).
+- Домашняя машина уже добавлена в Tailnet.
 
 ---
 
-## Что нужно сделать (порядок шагов)
+## Шаги deploy
 
-### 1. Создать DO droplet
+### 1. Создать VPS на Digital Ocean
 - https://cloud.digitalocean.com → Create → Droplets
-- **Region:** Frankfurt (FRA1) — ближе всех к РФ
-- **Image:** Ubuntu 24.04 (LTS) x64
-- **Size:** Basic → Regular Intel → **$4/мес** (512MB RAM, 10GB SSD)
-- **Authentication:** SSH key (добавить публичный ключ с того компа, с которого будем настраивать)
-- **Hostname:** `health-proxy`
-- После создания — записать публичный IP
+- **Region:** Frankfurt (FRA1) или ближайший к юзеру
+- **Image:** Ubuntu 24.04 LTS x64
+- **Size:** Basic → Regular Intel → ~$4/мес (512MB RAM, 10GB SSD достаточно)
+- **Authentication:** SSH-ключ той машины, с которой будем настраивать
+- Записать публичный IP
 
 ### 2. Привязать домен
-В reg.ru → панель управления → DNS-записи:
-- Добавить **A-запись:** `health.<домен>.ru → <IP droplet>`, TTL 600
-- Подождать 5-30 минут пока DNS прорастёт. Проверить: `dig health.<домен>.ru +short` должен вернуть IP droplet.
+В панели регистратора домена → DNS-записи:
+- **A-запись:** имя поддомена (или корень) → IP сервера, TTL 600
+- Подождать 5–30 минут. Проверить: `dig <домен> +short` должен вернуть IP.
 
-### 3. Подготовить droplet
-SSH в droplet (`ssh root@<IP>`):
+### 3. Подготовить сервер
+SSH в сервер (`ssh root@<IP>`):
 ```bash
-# Системные обновления
 apt update && apt upgrade -y
 
 # Tailscale
 curl -fsSL https://tailscale.com/install.sh | sh
 tailscale up
-# (откроется URL для логина — авторизовать в том же Tailnet что и Mac mini)
+# (открыть URL для логина, авторизовать в том же Tailnet что и домашняя машина)
 
 # Caddy
 apt install -y caddy
-
-# Узнать Tailnet-имя Mac mini (с Mac mini):
-#   tailscale status
-# Запомнить magic-dns имя, например: macmini-dubai.tail-xxxxx.ts.net
 ```
+
+Узнать Tailnet-имя домашней машины (выполнить на ней):
+```bash
+tailscale status
+```
+Запомнить имя ноды (например `<hostname>.<tailnet-id>.ts.net`).
 
 ### 4. Настроить Caddy
-На droplet, `sudo nano /etc/caddy/Caddyfile`:
+На сервере, `sudo nano /etc/caddy/Caddyfile`:
 ```
-health.<домен>.ru {
-    reverse_proxy <mac-mini-tailnet-name>:3000
+<домен> {
+    reverse_proxy <tailnet-имя-домашней-машины>:3000
 }
 ```
 Перезапустить:
@@ -104,46 +102,47 @@ health.<домен>.ru {
 systemctl restart caddy
 systemctl status caddy
 ```
-Caddy сам выпустит Let's Encrypt сертификат (домен уже должен резолвиться на droplet — это требование Let's Encrypt).
+Caddy сам выпустит Let's Encrypt сертификат — для этого DNS уже должен резолвиться на сервер.
 
-### 5. Проверить
-- `curl https://health.<домен>.ru` → HTTP 200, HTML дашборда
-- Открыть в браузере — должен открыться дашборд.
+### 5. Проверка
+- `curl https://<домен>` → HTTP 200, HTML дашборда
+- Открыть в браузере — должен загрузиться дашборд
 
-### 6. Authentication (важно!)
-Сейчас дашборд **без авторизации** — публичный. После публикации **любой по URL увидит мед-данные**. Варианты:
-- **Caddy basic auth** — простой пароль (быстрый патч на старт)
-- **Tailscale Funnel** вместо публичного домена — доступ только тем кто в Tailnet
-- **OAuth (GitHub/Google)** в Next.js middleware — правильный путь
+### 6. Authentication (обязательно перед публикацией)
+Сейчас дашборд **без авторизации** — публичный. Без защиты любой по URL увидит мед-данные. Варианты:
 
-Решить **до публикации**. Самое быстрое — basic auth в Caddyfile:
+- **Caddy basic auth** — быстрый патч на старт.
+- **Tailscale Funnel** вместо публичного домена — доступ только из Tailnet, без VPS вообще.
+- **OAuth (GitHub/Google) middleware в Next.js** — правильный путь, но больше работы.
+
+Самый быстрый — basic auth в Caddyfile:
 ```
-health.<домен>.ru {
+<домен> {
     basic_auth {
-        konstantin <bcrypt-hash>
+        <username> <bcrypt-hash>
     }
-    reverse_proxy <mac-mini-tailnet-name>:3000
+    reverse_proxy <tailnet-имя-машины>:3000
 }
 ```
-Хеш сгенерить: `caddy hash-password`.
+Хеш генерится: `caddy hash-password`.
 
 ---
 
-## Контекст: что есть на руках
+## Контекст
 
-- **Gemini API key** получен, но **не используем** в текущем плане (т.к. парсинг остался на Mac mini через `claude -p`). Файл `.env` Mac mini его НЕ содержит. Если в будущем перейдём на Anthropic/Gemini API — впишется.
-- **Whoop:** OAuth-каркас в `apps/whoop-sync/`. Ждёт `WHOOP_CLIENT_ID/SECRET` от developer.whoop.com. Запуск авторизации: `pnpm --filter @health/whoop-sync auth` (поднимает локальный HTTP сервер на `127.0.0.1:8765`). После публикации — настроить redirect URI в Whoop приложении именно на этот localhost, **не на публичный домен** (auth-flow одноразовый, локально).
-- **Весы Xiaomi:** только спека в vault, юзер ещё не купил.
+- **Gemini API key:** получен пользователем, но **не используется** в текущей схеме (парсинг остался на домашней машине через `claude -p`). Если потом перейдём на API парсинг — впишется в `.env`.
+- **Whoop:** OAuth-каркас в `apps/whoop-sync/`. Ждёт `WHOOP_CLIENT_ID/SECRET` из developer.whoop.com. Запуск авторизации: `pnpm --filter @health/whoop-sync auth` — поднимает HTTP-сервер на `127.0.0.1:8765`. Redirect URI в Whoop App настраивать **на localhost**, не на публичный домен (поток одноразовый и локальный).
+- **Весы Xiaomi:** только спека в vault, реализовывать когда юзер купит весы.
 
 ---
 
 ## Что НЕ переносить на сервер
 
-- БД (SQLite) — остаётся на Mac mini.
-- Vault (`~/Documents/AI/health/`) — остаётся на Mac mini.
-- `.env` с TELEGRAM_BOT_TOKEN — остаётся на Mac mini.
-- Telegram-бот — остаётся на Mac mini (нужен `claude -p` для фото еды).
-- Importer/watcher — на Mac mini.
+- БД (SQLite) — остаётся на домашней машине.
+- Vault с PDF/markdown — остаётся на домашней машине.
+- `.env` с токенами — остаётся на домашней машине.
+- Telegram-бот — на домашней машине (нужен `claude -p` для фото еды).
+- Importer/watcher — на домашней машине.
 
 На сервере **только Caddy + Tailscale**.
 
@@ -151,16 +150,16 @@ health.<домен>.ru {
 
 ## Возможные проблемы
 
-- **Caddy не получает сертификат:** проверь DNS прорастание (`dig health.<домен>.ru +short` с droplet). Порты 80/443 должны быть открыты в DO Firewall (по умолчанию открыты).
-- **502 Bad Gateway:** Mac mini не доступен. Проверь `tailscale status` на обеих машинах, `curl http://<mac-mini-tailnet-name>:3000` с droplet.
-- **CORS/host header:** если Next.js ругается на host — добавить в Caddyfile `header_up Host {host}` или настроить Next allowed hosts.
-- **Reg.ru долгий DNS:** иногда A-запись прорастает 1-2 часа. Терпение.
+- **Caddy не получает сертификат:** проверь DNS прорастание (`dig <домен> +short` с сервера). Порты 80/443 должны быть открыты в DO Firewall (по умолчанию открыты).
+- **502 Bad Gateway:** домашняя машина не доступна по Tailnet. Проверь `tailscale status` на обеих, `curl http://<tailnet-имя>:3000` с сервера.
+- **Host header / CORS:** если Next.js ругается — в Caddyfile добавить `header_up Host {host}` или настроить Next allowedHosts.
+- **DNS не прорастает:** иногда A-запись держится в кеше 1–2 часа. Подождать.
 
 ---
 
-## Контакты и доступы
+## После успешного deploy
 
-- **GitHub:** Doremar/health (приватный), коллаб molodros333 (нужно добавить отдельно, см. историю — аккаунт Doremar flagged GitHub'ом, в процессе восстановления через Support).
-- **Telegram-бот:** @codebrotebot, токен в `.env` на Mac mini.
-- **DO аккаунт:** заводится пользователем.
-- **Reg.ru:** домен уже куплен, имя сообщит пользователь.
+Обновить этот документ:
+- Добавить "Что работает" в начало с датой
+- Записать выбранную схему auth
+- Если возникли свои issue — задокументировать в "Возможные проблемы"

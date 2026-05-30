@@ -20,8 +20,10 @@
     <string>/Users/konstantin/Documents/AI/health</string>
     <key>TELEGRAM_BOT_TOKEN</key>
     <string>8851934442:AAFiXAmylkeLnmPa-jZutx93BlW87LATxbw</string>
+    <key>CLAUDE_BIN</key>
+    <string>/Users/konstantin/.local/bin/claude</string>
     <key>PATH</key>
-    <string>/Users/konstantin/Library/pnpm:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <string>/Users/konstantin/Library/pnpm:/Users/konstantin/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
   <key>RunAtLoad</key><false/>
   <key>KeepAlive</key><false/>

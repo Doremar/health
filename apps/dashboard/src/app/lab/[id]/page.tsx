@@ -1,10 +1,23 @@
 import { getLab, listLabMarkers } from "@/lib/queries";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
-import { FlagPill } from "@/components/FlagPill";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
-import Link from "next/link";
+import { ClickableRow } from "@/components/ClickableRow";
 import type { Flag } from "@health/shared";
+
+const FLAG_LABEL: Record<Flag, string> = {
+  normal: "Норма",
+  low: "Ниже нормы",
+  high: "Выше нормы",
+  critical: "Критическое отклонение",
+};
+
+const FLAG_COLOR: Record<Flag, string> = {
+  normal: "text-flag-normal",
+  low: "text-flag-low",
+  high: "text-flag-high",
+  critical: "text-flag-critical",
+};
 
 interface MarkerRow {
   code: string; name: string;
@@ -34,41 +47,37 @@ export default async function LabPage({ params }: { params: Promise<{ id: string
       )}
 
       <div className="bg-bg-surface border border-border-soft rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead className="bg-bg-elevated text-text-faint">
             <tr>
-              <th className="p-3 text-left font-medium">Код</th>
-              <th className="p-3 text-left font-medium">Название</th>
-              <th className="p-3 text-right font-medium">Значение</th>
-              <th className="p-3 text-left font-medium">Норма</th>
-              <th className="p-3 text-center font-medium">Флаг</th>
+              <th className="p-3 text-center font-medium w-1/4">Название</th>
+              <th className="p-3 text-center font-medium w-1/4">Значение</th>
+              <th className="p-3 text-center font-medium w-1/4">Норма</th>
+              <th className="p-3 text-center font-medium w-1/4">Состояние</th>
             </tr>
           </thead>
           <tbody>
             {markers.map((m, i) => (
-              <tr key={i} className="border-t border-border-soft">
-                <td className="p-3">
-                  <Link href={`/marker/${m.code}`} className="text-flag-low hover:underline">{m.code}</Link>
-                </td>
-                <td className="p-3 text-text-muted">{m.name}</td>
-                <td className="p-3 text-right tabular text-text-primary">
+              <ClickableRow key={i} href={`/marker/${m.code}`}>
+                <td className="p-3 text-center text-text-primary">{m.name}</td>
+                <td className="p-3 text-center tabular text-text-primary">
                   {m.value ?? m.value_text ?? "—"} <span className="text-text-faint">{m.unit}</span>
                 </td>
-                <td className="p-3 text-text-faint">
+                <td className="p-3 text-center text-text-faint">
                   {m.ref_low ?? "—"}–{m.ref_high ?? "—"}
                   {m.ref_text && <span className="ml-1">({m.ref_text})</span>}
                 </td>
-                <td className="p-3 text-center"><FlagPill flag={m.flag} size="sm" /></td>
-              </tr>
+                <td className={`p-3 text-center ${FLAG_COLOR[m.flag]}`}>{FLAG_LABEL[m.flag]}</td>
+              </ClickableRow>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="mt-6 flex gap-5 text-sm">
+      <div className="mt-6 flex gap-2">
         <a
           href={`/api/file?path=${encodeURIComponent(lab.source_file)}`}
-          className="text-flag-low hover:underline"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-card text-flag-low text-xs whitespace-nowrap hover:border-border-active hover:text-text-strong"
         >
           Открыть PDF
         </a>
@@ -77,7 +86,7 @@ export default async function LabPage({ params }: { params: Promise<{ id: string
           fields={{ id: lab.id }}
           confirmText={`Удалить эту сдачу (${lab.lab_name}${lab.panel ? " · " + lab.panel : ""} от ${lab.date})? Все маркеры тоже пропадут.`}
           label="Удалить сдачу"
-          className="text-flag-critical hover:underline"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-card text-flag-critical text-xs whitespace-nowrap hover:border-flag-critical"
         />
       </div>
     </>

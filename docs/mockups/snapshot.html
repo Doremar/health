@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>health · snapshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Geist:wght@300..700&family=JetBrains+Mono:wght@300..600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-deep: #08080b;
+    --bg-base: #0c0c11;
+    --bg-elev: #131319;
+    --bg-elev-hi: #1a1a23;
+    --border: #1f1f2b;
+    --border-bright: #2b2b3a;
+    --text: #e6e6ea;
+    --text-dim: #92929e;
+    --text-faint: #5b5b66;
+    --good: #6fdcb1;
+    --good-bg: rgba(111, 220, 177, 0.07);
+    --warn: #f4b961;
+    --warn-bg: rgba(244, 185, 97, 0.08);
+    --bad: #ef6b6b;
+    --bad-bg: rgba(239, 107, 107, 0.09);
+    --cool: #7aa7f0;
+    --cool-bg: rgba(122, 167, 240, 0.07);
+    --pulse: #b48cf2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background atmosphere */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at top right, rgba(122, 167, 240, 0.04), transparent 50%),
+      radial-gradient(ellipse at bottom left, rgba(180, 140, 242, 0.025), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grid texture overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 72px 72px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  .frame {
+    position: relative;
+    z-index: 1;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+
+  /* ── HEADER ─────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-mark {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    position: relative;
+    background: linear-gradient(135deg, rgba(111,220,177,0.08), transparent);
+  }
+  .brand-mark::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--good);
+    border-radius: 50%;
+    box-shadow: 0 0 14px var(--good);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.9; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.7); }
+  }
+
+  .brand-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 22px;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-name em {
+    font-style: italic;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  nav {
+    display: flex;
+    gap: 36px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-dim);
+  }
+
+  nav a {
+    color: inherit;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 4px;
+    transition: color 0.2s;
+  }
+  nav a.active { color: var(--text); }
+  nav a.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--good);
+  }
+  nav a:hover { color: var(--text); }
+
+  .date-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .date-pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 8px var(--good);
+  }
+
+  /* ── HERO ─────────────────────────── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 64px;
+    align-items: end;
+    margin-bottom: 64px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    color: var(--text-faint);
+    margin-bottom: 18px;
+  }
+
+  .hero-headline {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(54px, 7vw, 96px);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 1;
+    margin-bottom: 24px;
+  }
+
+  .hero-headline .num {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--bad);
+  }
+
+  .hero-headline .small {
+    font-size: 0.6em;
+    color: var(--text-dim);
+    font-weight: 300;
+    font-style: italic;
+    display: block;
+    margin-top: 8px;
+  }
+
+  .hero-subtext {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.55;
+    max-width: 480px;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 40px;
+    align-self: end;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-faint);
+  }
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 38px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .stat-value.bad { color: var(--bad); }
+  .stat-value.warn { color: var(--warn); }
+  .stat-value.good { color: var(--good); }
+  .stat-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* ── SECTION HEADERS ─────────────────────────── */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .section-title em {
+    font-style: italic;
+    color: var(--text-dim);
+    font-weight: 300;
+    font-size: 0.7em;
+  }
+  .section-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-faint);
+  }
+
+  /* ── ALERTS ─────────────────────────── */
+  .alerts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 64px;
+  }
+  .alert {
+    background: var(--bg-elev);
+    padding: 24px 28px;
+    position: relative;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .alert:hover { background: var(--bg-elev-hi); }
+
+  .alert::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--bad);
+  }
+  .alert.warn::before { background: var(--warn); }
+
+  .alert-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .alert-name {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  .alert-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .alert-flag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: var(--bad-bg);
+    color: var(--bad);
+  }
+  .alert-flag.warn {
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+
+  .alert-value {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 16px;
+  }
+  .alert-num {
+    font-family: 'Fraunces', serif;
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--bad);
+  }
+  .alert.warn .alert-num { color: var(--warn); }
+  .alert-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .alert-range {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+  }
+  .alert-range b {
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+  .alert-trend {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .alert-trend svg { height: 28px; width: 100%; max-width: 220px; }
+  .delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: var(--bad-bg);
+    color: var(--bad);
+  }
+  .delta.up::before { content: '↑ '; }
+  .delta.down::before { content: '↓ '; }
+  .delta.warn { background: var(--warn-bg); color: var(--warn); }
+  .delta.good { background: var(--good-bg); color: var(--good); }
+
+  /* ── PINNED GRID ─────────────────────────── */
+  .pinned {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 64px;
+  }
+  .pin {
+    background: var(--bg-elev);
+    padding: 22px 24px;
+    transition: background 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .pin:hover { background: var(--bg-elev-hi); }
+
+  .pin-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pin-tag {
+    font-size: 9px;
+    color: var(--good);
+    letter-spacing: 0.14em;
+  }
+  .pin-tag.warn { color: var(--warn); }
+  .pin-val {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+  .pin-num {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .pin-num.warn { color: var(--warn); }
+  .pin-num.good { color: var(--good); }
+  .pin-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .pin-spark {
+    margin-top: 12px;
+    height: 22px;
+  }
+  .pin-spark svg { width: 100%; height: 100%; }
+  .pin-bottom {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+  }
+
+  /* ── TWO-COLUMN LIFE PANEL ─────────────────────────── */
+  .life {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 64px;
+  }
+
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 28px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 18px;
+  }
+
+  /* Whoop ring */
+  .ring-wrap {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 18px;
+  }
+  .ring {
+    width: 90px; height: 90px;
+    position: relative;
+  }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-track { stroke: var(--border-bright); stroke-width: 5; fill: none; }
+  .ring-fill { stroke-width: 5; fill: none; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease; }
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+  }
+  .ring-num {
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .ring-suffix {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 0.14em;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  .ring-data {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ring-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .ring-row span:first-child {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .ring-row span:last-child {
+    color: var(--text);
+  }
+
+  .card-title-l {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* Feeling */
+  .feeling-num {
+    font-family: 'Fraunces', serif;
+    font-size: 88px;
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin: 8px 0 14px;
+  }
+  .feeling-num em {
+    font-size: 0.4em;
+    color: var(--text-faint);
+    font-style: italic;
+    vertical-align: top;
+    margin-left: 4px;
+  }
+  .feeling-bar {
+    height: 4px;
+    background: var(--border-bright);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .feeling-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0 30% 0 0;
+    background: linear-gradient(90deg, var(--bad), var(--warn) 50%, var(--good));
+    border-radius: 2px;
+  }
+  .feeling-note {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.5;
+    border-left: 2px solid var(--border-bright);
+    padding-left: 12px;
+  }
+
+  /* Nutrition */
+  .nut-rows { display: flex; flex-direction: column; gap: 14px; }
+  .nut-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 80px;
+    gap: 12px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .nut-row .label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .nut-row .num {
+    color: var(--text-dim);
+    text-align: right;
+    font-feature-settings: 'tnum';
+  }
+  .nut-bar {
+    height: 4px;
+    background: var(--border-bright);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .nut-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 2px;
+    background: var(--good);
+  }
+  .nut-fill.warn { background: var(--warn); }
+
+  /* ── LATEST LABS ─────────────────────────── */
+  .labs {
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  .lab-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 100px 90px 60px;
+    gap: 28px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .lab-row:last-child { border-bottom: none; }
+  .lab-row:hover { background: var(--bg-elev-hi); }
+
+  .lab-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+  }
+  .lab-title {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+  .lab-source {
+    font-family: 'Geist', sans-serif;
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 3px;
+  }
+  .lab-markers {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .lab-flags {
+    display: flex;
+    gap: 4px;
+  }
+  .flag-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-faint);
+  }
+  .flag-dot.bad { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+  .flag-dot.warn { background: var(--warn); }
+  .flag-dot.good { background: var(--good); }
+  .lab-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-faint);
+    text-align: right;
+    font-size: 14px;
+  }
+
+  /* ── FOOTER ─────────────────────────── */
+  footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  footer .group { display: flex; gap: 28px; }
+
+  /* ── Entry animations ─────────────────────────── */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  header, .hero, .alerts, .pinned, .life, .labs, footer { animation: rise 0.6s ease both; }
+  .hero { animation-delay: 0.05s; }
+  .alerts { animation-delay: 0.1s; }
+  .pinned { animation-delay: 0.18s; }
+  .life { animation-delay: 0.24s; }
+  .labs { animation-delay: 0.32s; }
+  footer { animation-delay: 0.4s; }
+
+  /* Section spacer */
+  .section { margin-bottom: 64px; }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; }
+    .hero-stats { grid-template-columns: repeat(4, 1fr); }
+    .alerts, .pinned { grid-template-columns: 1fr 1fr; }
+    .life { grid-template-columns: 1fr; }
+    .lab-row { grid-template-columns: 90px 1fr 70px 40px; }
+    .lab-row .lab-flags { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-name">health<em>/snapshot</em></div>
+    </div>
+    <nav>
+      <a href="#" class="active">snapshot</a>
+      <a href="#">archive</a>
+      <a href="#">markers</a>
+      <a href="#">studies</a>
+      <a href="#">feelings</a>
+      <a href="#">whoop</a>
+      <a href="#">import</a>
+    </nav>
+    <div class="date-pill"><span class="dot"></span>Сб · 31 мая 2026</div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">— срез на сегодня</div>
+      <h1 class="hero-headline">
+        <span class="num">3</span>&nbsp;маркера<br>
+        <em>требуют внимания</em>
+        <span class="small">из 47 отслеживаемых · последний забор 14 дней назад</span>
+      </h1>
+      <p class="hero-subtext">
+        Холестерин и ТТГ остаются вне нормы второй раз подряд. Витамин D
+        опустился ниже порога — нужна ревизия рациона и солнца.
+      </p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-label">отклонений</span>
+        <span class="stat-value bad">3</span>
+        <span class="stat-unit">из 47 маркеров</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">пограничных</span>
+        <span class="stat-value warn">2</span>
+        <span class="stat-unit">в зоне риска</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">в норме</span>
+        <span class="stat-value good">42</span>
+        <span class="stat-unit">89%</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">последний лаб</span>
+        <span class="stat-value">14<small style="font-size:0.55em;color:var(--text-dim);font-style:italic;">&nbsp;д</small></span>
+        <span class="stat-unit">17 мая 2026</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALERTS -->
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">Отклонения <em>· три</em></h2>
+      <span class="section-meta">сортировка — критичность</span>
+    </div>
+    <div class="alerts">
+
+      <div class="alert">
+        <div class="alert-row">
+          <div>
+            <div class="alert-name">Холестерин общий</div>
+            <div class="alert-code">chol · CMP panel</div>
+          </div>
+          <div class="alert-flag">высокий</div>
+        </div>
+        <div class="alert-value">
+          <span class="alert-num">6.2</span>
+          <span class="alert-unit">ммоль/л</span>
+        </div>
+        <div class="alert-range">норма <b>&lt; 5.2</b> · превышение +1.0</div>
+        <div class="alert-trend">
+          <svg viewBox="0 0 220 28" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#ef6b6b" stroke-width="1.5"
+              points="0,18 30,16 60,15 90,13 120,11 150,9 180,7 220,4"/>
+            <circle cx="220" cy="4" r="2.5" fill="#ef6b6b"/>
+          </svg>
+          <span class="delta up">0.4</span>
+        </div>
+      </div>
+
+      <div class="alert">
+        <div class="alert-row">
+          <div>
+            <div class="alert-name">ТТГ</div>
+            <div class="alert-code">tsh · щитовидная панель</div>
+          </div>
+          <div class="alert-flag">высокий</div>
+        </div>
+        <div class="alert-value">
+          <span class="alert-num">5.8</span>
+          <span class="alert-unit">мЕд/л</span>
+        </div>
+        <div class="alert-range">норма <b>0.4 – 4.0</b> · превышение +1.8</div>
+        <div class="alert-trend">
+          <svg viewBox="0 0 220 28" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#ef6b6b" stroke-width="1.5"
+              points="0,22 30,20 60,18 90,15 120,12 150,10 180,7 220,5"/>
+            <circle cx="220" cy="5" r="2.5" fill="#ef6b6b"/>
+          </svg>
+          <span class="delta up">1.2</span>
+        </div>
+      </div>
+
+      <div class="alert warn">
+        <div class="alert-row">
+          <div>
+            <div class="alert-name">Витамин D</div>
+            <div class="alert-code">25-OH-D · нутриенты</div>
+          </div>
+          <div class="alert-flag warn">низкий</div>
+        </div>
+        <div class="alert-value">
+          <span class="alert-num">22</span>
+          <span class="alert-unit">нг/мл</span>
+        </div>
+        <div class="alert-range">норма <b>30 – 100</b> · дефицит −8</div>
+        <div class="alert-trend">
+          <svg viewBox="0 0 220 28" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#f4b961" stroke-width="1.5"
+              points="0,8 30,11 60,13 90,15 120,17 150,19 180,21 220,23"/>
+            <circle cx="220" cy="23" r="2.5" fill="#f4b961"/>
+          </svg>
+          <span class="delta down warn">3</span>
+        </div>
+      </div>
+
+      <div class="alert warn">
+        <div class="alert-row">
+          <div>
+            <div class="alert-name">Ферритин</div>
+            <div class="alert-code">ferr · железо</div>
+          </div>
+          <div class="alert-flag warn">пограничный</div>
+        </div>
+        <div class="alert-value">
+          <span class="alert-num">38</span>
+          <span class="alert-unit">нг/мл</span>
+        </div>
+        <div class="alert-range">норма <b>20 – 300</b> · нижняя треть</div>
+        <div class="alert-trend">
+          <svg viewBox="0 0 220 28" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#f4b961" stroke-width="1.5"
+              points="0,14 30,13 60,15 90,16 120,17 150,16 180,18 220,17"/>
+            <circle cx="220" cy="17" r="2.5" fill="#f4b961"/>
+          </svg>
+          <span class="delta down warn">2</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PINNED -->
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">Закреплённые <em>· восемь</em></h2>
+      <span class="section-meta">↻ настроить</span>
+    </div>
+    <div class="pinned">
+
+      <div class="pin">
+        <div class="pin-name">Гемоглобин <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num">152</span><span class="pin-unit">г/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,12 14,10 28,11 42,9 56,10 70,8 84,9 100,7"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>140 – 180</span><span>+3 за 6 мес</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">ЛПНП <span class="pin-tag warn">высокий</span></div>
+        <div class="pin-val"><span class="pin-num warn">4.2</span><span class="pin-unit">ммоль/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#f4b961" stroke-width="1.4"
+              points="0,18 14,16 28,14 42,12 56,11 70,9 84,8 100,6"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>&lt; 3.0</span><span>+0.5</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">Глюкоза <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num good">5.6</span><span class="pin-unit">ммоль/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,14 14,13 28,12 42,13 56,11 70,12 84,11 100,10"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>4.0 – 5.9</span><span>стабильно</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">Креатинин <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num">95</span><span class="pin-unit">мкмоль/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,12 14,11 28,13 42,11 56,12 70,10 84,11 100,10"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>70 – 115</span><span>−2</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">АЛТ <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num">32</span><span class="pin-unit">Ед/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,11 14,13 28,12 42,10 56,12 70,11 84,12 100,11"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>&lt; 40</span><span>+4</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">Магний <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num">0.92</span><span class="pin-unit">ммоль/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,10 14,12 28,11 42,13 56,12 70,11 84,10 100,11"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>0.7 – 1.05</span><span>стабильно</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">Кортизол <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num">412</span><span class="pin-unit">нмоль/л</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,8 14,10 28,9 42,12 56,11 70,13 84,12 100,11"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>170 – 540</span><span>−18</span></div>
+      </div>
+
+      <div class="pin">
+        <div class="pin-name">B12 <span class="pin-tag">в норме</span></div>
+        <div class="pin-val"><span class="pin-num">486</span><span class="pin-unit">пг/мл</span></div>
+        <div class="pin-spark">
+          <svg viewBox="0 0 100 22" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6fdcb1" stroke-width="1.4"
+              points="0,15 14,13 28,12 42,11 56,10 70,9 84,8 100,7"/>
+          </svg>
+        </div>
+        <div class="pin-bottom"><span>200 – 900</span><span>+42</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- LIFE PANEL -->
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">Сегодня <em>· живые сигналы</em></h2>
+      <span class="section-meta">обновлено 22:14</span>
+    </div>
+    <div class="life">
+
+      <!-- WHOOP -->
+      <div class="card">
+        <div class="card-eyebrow">whoop · восстановление</div>
+        <div class="ring-wrap">
+          <div class="ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="42" />
+              <circle class="ring-fill" cx="50" cy="50" r="42"
+                style="stroke:#f4b961;stroke-dasharray:264;stroke-dashoffset:84.5;" />
+            </svg>
+            <div class="ring-text">
+              <span class="ring-num">68</span>
+              <span class="ring-suffix">recovery</span>
+            </div>
+          </div>
+          <div class="ring-data">
+            <div class="ring-row"><span>HRV</span><span>47 ms</span></div>
+            <div class="ring-row"><span>RHR</span><span>54 bpm</span></div>
+            <div class="ring-row"><span>сон</span><span>7ч 12м</span></div>
+            <div class="ring-row"><span>strain</span><span>14.2</span></div>
+          </div>
+        </div>
+        <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--text-dim);font-size:13px;line-height:1.5;border-left:2px solid var(--border-bright);padding-left:12px;">
+          Жёлтая зона — организм восстанавливается, но не полностью. Сегодня легче.
+        </div>
+      </div>
+
+      <!-- FEELING -->
+      <div class="card">
+        <div class="card-eyebrow">самочувствие · последний опрос</div>
+        <div class="feeling-num">7<em>/10</em></div>
+        <div class="feeling-bar"></div>
+        <div class="feeling-note">«Утро норм, к обеду подсело. Голова чуть тяжёлая, спина тянет».</div>
+        <div style="margin-top:18px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">
+          <span>10:00 · 8</span><span>15:00 · 7</span><span>21:00 · 7</span>
+        </div>
+      </div>
+
+      <!-- NUTRITION -->
+      <div class="card">
+        <div class="card-eyebrow">питание · сегодня</div>
+        <div style="font-family:'Fraunces',serif;font-size:48px;font-weight:300;letter-spacing:-0.03em;line-height:1;margin-bottom:6px;">
+          1 820<span style="font-size:0.4em;color:var(--text-faint);font-style:italic;margin-left:6px;">/ 2 400</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.16em;margin-bottom:22px;">
+          ккал · 76% от нормы
+        </div>
+        <div class="nut-rows">
+          <div class="nut-row">
+            <span class="label">Белок</span>
+            <div class="nut-bar"><div class="nut-fill" style="width:84%;"></div></div>
+            <span class="num">109 / 130</span>
+          </div>
+          <div class="nut-row">
+            <span class="label">Жиры</span>
+            <div class="nut-bar"><div class="nut-fill warn" style="width:81%;"></div></div>
+            <span class="num">65 / 80</span>
+          </div>
+          <div class="nut-row">
+            <span class="label">Углев.</span>
+            <div class="nut-bar"><div class="nut-fill" style="width:73%;"></div></div>
+            <span class="num">219 / 300</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- LATEST LABS -->
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">Свежие лабы <em>· пять</em></h2>
+      <span class="section-meta">→ открыть архив</span>
+    </div>
+    <div class="labs">
+
+      <div class="lab-row">
+        <div class="lab-date">17 МАЯ 2026</div>
+        <div>
+          <div class="lab-title">Биохимия + липидный профиль</div>
+          <div class="lab-source">Инвитро · 24 маркера</div>
+        </div>
+        <div class="lab-markers">24 marks</div>
+        <div class="lab-flags">
+          <span class="flag-dot bad"></span>
+          <span class="flag-dot bad"></span>
+          <span class="flag-dot warn"></span>
+          <span class="flag-dot warn"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+        </div>
+        <div class="lab-arrow">→</div>
+      </div>
+
+      <div class="lab-row">
+        <div class="lab-date">12 МАЯ 2026</div>
+        <div>
+          <div class="lab-title">Витамины и микроэлементы</div>
+          <div class="lab-source">Гемотест · 9 маркеров</div>
+        </div>
+        <div class="lab-markers">9 marks</div>
+        <div class="lab-flags">
+          <span class="flag-dot warn"></span>
+          <span class="flag-dot warn"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+        </div>
+        <div class="lab-arrow">→</div>
+      </div>
+
+      <div class="lab-row">
+        <div class="lab-date">02 АПР 2026</div>
+        <div>
+          <div class="lab-title">Щитовидная панель</div>
+          <div class="lab-source">Инвитро · 5 маркеров</div>
+        </div>
+        <div class="lab-markers">5 marks</div>
+        <div class="lab-flags">
+          <span class="flag-dot bad"></span>
+          <span class="flag-dot warn"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+        </div>
+        <div class="lab-arrow">→</div>
+      </div>
+
+      <div class="lab-row">
+        <div class="lab-date">15 МАР 2026</div>
+        <div>
+          <div class="lab-title">Общий клинический анализ крови</div>
+          <div class="lab-source">КДЛ · 22 маркера</div>
+        </div>
+        <div class="lab-markers">22 marks</div>
+        <div class="lab-flags">
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+          <span class="flag-dot good"></span>
+        </div>
+        <div class="lab-arrow">→</div>
+      </div>
+
+      <div class="lab-row">
+        <div class="lab-date">28 ФЕВ 2026</div>
+        <div>
+          <div class="lab-title">Рентген придаточных пазух</div>
+          <div class="lab-source">Инвитро · исследование</div>
+        </div>
+        <div class="lab-markers">study</div>
+        <div class="lab-flags">
+          <span class="flag-dot warn"></span>
+        </div>
+        <div class="lab-arrow">→</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="group">
+      <span>health · v0.4</span>
+      <span>· data: локально</span>
+      <span>· sync: tailnet</span>
+    </div>
+    <div class="group">
+      <span>watcher · ✓ активен</span>
+      <span>bot · ✓ активен</span>
+      <span>whoop · ожидает oauth</span>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>

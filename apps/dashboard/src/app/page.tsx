@@ -1,4 +1,4 @@
-import { listMarkerSummaries, listMarkerHistoryValues, getPinnedOverrides } from "@/lib/queries";
+import { listMarkerSummaries, getPinnedOverrides } from "@/lib/queries";
 import { classifyMarkerWithOverrides, type Flag } from "@health/shared";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -24,8 +24,6 @@ export default function HomePage() {
   const hero = abnormal[0];
   const restAbnormal = abnormal.slice(1);
 
-  const heroHistory = hero ? listMarkerHistoryValues(hero.code) : undefined;
-
   const meta = summaries.length === 0
     ? "БД пуста — загрузи первый PDF"
     : `${summaries.length} показателей · последнее обновление ${summaries[0]?.last_date ?? "—"}`;
@@ -48,7 +46,6 @@ export default function HomePage() {
             refLow={hero.ref_low}
             refHigh={hero.ref_high}
             flag={hero.last_flag}
-            history={heroHistory && heroHistory.length >= 2 ? heroHistory : undefined}
           />
         </>
       )}
@@ -74,13 +71,12 @@ export default function HomePage() {
             <MiniCard key={s.code}
               code={s.code} name={s.name} panel={s.last_panel}
               value={s.last_value} valueText={s.last_value_text} unit={s.unit}
-              refLow={s.ref_low} refHigh={s.ref_high} flag={s.last_flag}
-              sparkline={listMarkerHistoryValues(s.code)} />
+              refLow={s.ref_low} refHigh={s.ref_high} flag={s.last_flag} />
           ))}
         </div>
       ) : (
         <div className="text-sm text-text-faint">
-          Ни одного главного показателя пока не загружено. См. <code>PINNED_CODES</code> в <code>packages/shared/src/markers-config.ts</code>.
+          Ни один маркер не закреплён. Закрепи нужные в <code>/settings</code>.
         </div>
       )}
 

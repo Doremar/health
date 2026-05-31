@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRef, useCallback } from "react";
 import {
   LayoutDashboard, Archive, Upload, Pill, Activity, Watch,
   ListPlus, Apple, Dumbbell, Settings, Stethoscope,
@@ -54,10 +55,44 @@ interface SidebarProps {
   studiesCount?: number;
 }
 
+// Радиус эффекта (px по вертикали). Чем меньше — тем "острее" пик.
+const MAG_RADIUS = 40;
+// Максимальный прирост scale (1 + MAG_BOOST).
+const MAG_BOOST = 0.10;
+// Максимальный сдвиг вправо (px).
+const MAG_SHIFT = 3;
+
 export function Sidebar({ archiveCount, studiesCount }: SidebarProps) {
   const pathname = usePathname();
+  const asideRef = useRef<HTMLElement>(null);
+
+  const handleMove = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    const aside = asideRef.current;
+    if (!aside) return;
+    const items = aside.querySelectorAll<HTMLElement>("[data-dock-item]");
+    items.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const dy = Math.abs(e.clientY - r.y - r.height / 2);
+      const t = Math.max(0, 1 - dy / MAG_RADIUS);
+      el.style.transform = `translateX(${(t * MAG_SHIFT).toFixed(2)}px) scale(${(1 + t * MAG_BOOST).toFixed(3)})`;
+    });
+  }, []);
+
+  const handleLeave = useCallback(() => {
+    const aside = asideRef.current;
+    if (!aside) return;
+    aside.querySelectorAll<HTMLElement>("[data-dock-item]").forEach((el) => {
+      el.style.transform = "";
+    });
+  }, []);
+
   return (
-    <aside className="w-[220px] bg-bg-sidebar border-r border-border-soft p-6 flex flex-col min-h-screen">
+    <aside
+      ref={asideRef}
+      onPointerMove={handleMove}
+      onPointerLeave={handleLeave}
+      className="w-[220px] bg-bg-sidebar border-r border-border-soft p-6 flex flex-col h-screen sticky top-0 self-start overflow-y-auto"
+    >
       <div className="flex items-center gap-2.5 mb-7 px-2 text-sm font-semibold tracking-tight text-text-primary">
         <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-flag-normal to-flag-high" />
         Health
@@ -85,8 +120,14 @@ export function Sidebar({ archiveCount, studiesCount }: SidebarProps) {
                 href={item.soon ? "#" : item.href}
                 onClick={(e) => item.soon && e.preventDefault()}
                 aria-disabled={item.soon}
+                data-dock-item
+                style={{
+                  transformOrigin: "left center",
+                  transition: "transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 160ms, color 160ms",
+                  willChange: "transform",
+                }}
                 className={[
-                  "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] mb-px transition-colors",
+                  "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] mb-px",
                   item.soon
                     ? "text-text-disabled cursor-not-allowed"
                     : active
@@ -116,7 +157,13 @@ export function Sidebar({ archiveCount, studiesCount }: SidebarProps) {
       <div className="mt-auto pt-4 border-t border-border-soft">
         <Link
           href="/settings"
-          className="flex items-center gap-2.5 px-2 py-1.5 text-xs text-text-faint hover:text-text-strong transition-colors"
+          data-dock-item
+          style={{
+            transformOrigin: "left center",
+            transition: "transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 160ms, color 160ms",
+            willChange: "transform",
+          }}
+          className="flex items-center gap-2.5 px-2 py-1.5 text-xs text-text-faint hover:text-text-strong"
         >
           <Settings size={12} />
           Настройки

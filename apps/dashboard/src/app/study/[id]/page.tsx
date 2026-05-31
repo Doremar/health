@@ -121,18 +121,21 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
         </>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-5 text-sm">
+      <div className="mt-6 flex flex-wrap gap-2">
         <a
           href={`/api/file?path=${encodeURIComponent(study.source_file)}`}
-          className="text-flag-low hover:underline"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-card text-flag-low text-xs whitespace-nowrap hover:border-border-active hover:text-text-strong"
         >
           Открыть PDF
         </a>
         <form action="/api/study-reclassify" method="POST" className="inline">
           <input type="hidden" name="id" value={study.id} />
           <input type="hidden" name="target" value="lab" />
-          <button type="submit" className="text-text-faint hover:text-text-primary hover:underline">
-            Это анализ, не исследование →
+          <button
+            type="submit"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-card text-text-faint text-xs whitespace-nowrap hover:border-border-active hover:text-text-strong"
+          >
+            Это анализ, не исследование <span aria-hidden>→</span>
           </button>
         </form>
         <ConfirmDeleteButton
@@ -140,7 +143,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
           fields={{ id: study.id }}
           confirmText={`Удалить это исследование (${TYPE_LABELS[study.type] ?? study.type}${study.organ ? " " + study.organ : ""} от ${study.date})? Диагнозы и показатели тоже пропадут.`}
           label="Удалить исследование"
-          className="text-flag-critical hover:underline"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-card text-flag-critical text-xs whitespace-nowrap hover:border-flag-critical"
         />
       </div>
     </>

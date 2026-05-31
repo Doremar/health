@@ -1,7 +1,8 @@
 // apps/dashboard/src/app/studies/page.tsx
 import { listAllStudies, searchStudies } from "@/lib/queries";
 import { PageHeader } from "@/components/PageHeader";
-import Link from "next/link";
+import { ClickableRow } from "@/components/ClickableRow";
+import { StudiesFilters } from "@/components/StudiesFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -34,44 +35,12 @@ export default async function StudiesPage({ searchParams }: { searchParams: Prom
         meta={`${studies.length} из ${all.length}${needsReview > 0 ? ` · ${needsReview} требуют проверки` : ""}`}
       />
 
-      <form className="flex gap-3 items-end mb-6 flex-wrap">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-[11px] uppercase tracking-wider text-text-faint mb-1">Поиск</label>
-          <input
-            name="q"
-            defaultValue={sp.q ?? ""}
-            className="w-full bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
-            placeholder="орган, врач, диагноз, фраза из заключения"
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] uppercase tracking-wider text-text-faint mb-1">Тип</label>
-          <select
-            name="type"
-            defaultValue={sp.type ?? ""}
-            className="bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-border-active"
-          >
-            <option value="">все</option>
-            {knownTypes.map((t) => (
-              <option key={t} value={t}>{TYPE_LABELS[t] ?? t}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-[11px] uppercase tracking-wider text-text-faint mb-1">Модальность</label>
-          <select
-            name="modality"
-            defaultValue={sp.modality ?? ""}
-            className="bg-bg-surface border border-border-card rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-border-active"
-          >
-            <option value="">все</option>
-            {knownMods.map((m) => (
-              <option key={m} value={m}>{MODALITY_LABELS[m] ?? m}</option>
-            ))}
-          </select>
-        </div>
-        <button className="bg-flag-low text-bg-page rounded-md px-4 py-2 text-sm font-medium">Применить</button>
-      </form>
+      <StudiesFilters
+        knownTypes={knownTypes}
+        knownMods={knownMods}
+        typeLabels={TYPE_LABELS}
+        modalityLabels={MODALITY_LABELS}
+      />
 
       <div className="bg-bg-surface border border-border-soft rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
@@ -82,14 +51,13 @@ export default async function StudiesPage({ searchParams }: { searchParams: Prom
               <th className="p-3 text-left font-medium">Орган</th>
               <th className="p-3 text-left font-medium">Лаборатория</th>
               <th className="p-3 text-left font-medium">Заключение</th>
-              <th className="p-3"></th>
             </tr>
           </thead>
           <tbody>
             {studies.map((s) => {
               const snippet = (s.conclusion ?? "").slice(0, 80);
               return (
-                <tr key={s.id} className="border-t border-border-soft hover:bg-bg-elevated/40 transition-colors">
+                <ClickableRow key={s.id} href={`/study/${s.id}`}>
                   <td className="p-3 text-text-primary tabular align-top">{s.date}</td>
                   <td className="p-3 text-text-muted align-top">
                     <span className="bg-bg-elevated text-text-strong px-2 py-0.5 rounded text-xs">
@@ -104,12 +72,7 @@ export default async function StudiesPage({ searchParams }: { searchParams: Prom
                   <td className="p-3 text-text-faint align-top text-xs">
                     {snippet}{(s.conclusion ?? "").length > 80 ? "…" : ""}
                   </td>
-                  <td className="p-3 align-top">
-                    <Link href={`/study/${s.id}`} className="text-flag-low hover:underline text-xs whitespace-nowrap">
-                      открыть →
-                    </Link>
-                  </td>
-                </tr>
+                </ClickableRow>
               );
             })}
           </tbody>

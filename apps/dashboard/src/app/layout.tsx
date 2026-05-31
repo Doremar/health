@@ -26,10 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="ru" className={inter.variable}>
-      <body className="font-sans bg-bg-page text-text-strong min-h-screen">
-        <div className="flex">
+      <body className="font-sans bg-bg-page text-text-strong min-h-screen w-full">
+        <div className="flex w-full min-h-screen">
           <Sidebar archiveCount={labsCount} studiesCount={studiesCount} />
-          <main className="flex-1 px-9 py-7 max-w-[1200px]">{children}</main>
+          <main className="flex-1 px-9 py-7 min-w-0">{children}</main>
         </div>
       </body>
     </html>
